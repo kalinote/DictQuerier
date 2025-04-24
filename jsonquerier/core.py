@@ -1,6 +1,7 @@
 """
 核心查询功能
 """
+import re
 from typing import Any, Union, List, Dict
 
 from .exceptions import JsonPathError
@@ -23,12 +24,23 @@ def query_json(data: Union[Dict, List], path: str, no_path_exception: bool = Fal
     Returns:
         Any: 查询结果
     """
+    path = path.strip()
+    if path == '':
+        return data
+    
+    # TODO 增加对 JSON Path 的兼容支持
+    json_path = False
+    if path.startswith('$'):
+        json_path = True
+        path = path[1:]
+    
     elements = parse_path(path)
     current = data
     try:
         for idx, element in enumerate(elements):
-            # TODO 增加字符串通配符
-            if element == '*':  # 处理简单通配符
+            # TODO 增加字符串正则表达式
+            if element == '*':
+                # 处理简单通配符
                 if isinstance(current, list):
                     results = [query_json(item, elements2path(elements[idx+1:]), no_path_exception=True) for item in current]
                     if all(result == [] for result in results):
@@ -41,16 +53,39 @@ def query_json(data: Union[Dict, List], path: str, no_path_exception: bool = Fal
             elif isinstance(current, list) and isinstance(element, int):
                 # 基础列表索引解析
                 if element >= len(current):
-                    raise IndexError(f"数组访问越界: <{element}>")
+                    raise IndexError(f"数组访问越界: < {element} >")
                 current = current[element]
-            elif isinstance(current, dict) and element in current:
+            elif isinstance(current, dict):
                 # 字典解析
-                current = current[element]
+                if element in current:
+                    current = current[element]
+                else:
+                    # 正则表达式处理
+                    try:
+                        regex = re.compile(element)
+                    except re.error as e:
+                        raise JsonPathError(f"路径错误或类型不匹配，或者是不合法的正则表达式：<{element}>")
+                    matching_elements = [item for item in current.keys() if regex.search(str(item))]
+                    
+                    if len(matching_elements) == 0:
+                        raise JsonPathError(f"已解析正则表达式，但未找到匹配的元素：<{element}>")
+                    
+                    # 如果有后续路径，则为每个匹配元素递归应用
+                    if idx < len(elements) - 1:
+                        results = []
+                        for item in matching_elements:
+                            item_result = query_json(current[item], elements2path(elements[idx+1:]), no_path_exception=True)
+                            if item_result != []:
+                                results.append(item_result)
+                        return results if results else []
+                    else:
+                        # 没有后续路径，直接返回所有匹配元素的值
+                        return [current[item] for item in matching_elements]
             elif isinstance(current, list) and isinstance(element, Expression):
                 # 复杂表达式解析
                 result_list = []
                 if not isinstance(element.operator, Opreater):
-                    raise SyntaxError(f"不支持的运算符类型: <{type(element.operator).__name__}>")
+                    raise SyntaxError(f"不支持的运算符类型: < {type(element.operator).__name__} >")
                 
                 itempack_list = element.operate(current)
                 for item in itempack_list:

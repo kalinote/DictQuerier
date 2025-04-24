@@ -248,7 +248,9 @@ def parse_path(path: str) -> List[Union[str, int]]:
             if i + 1 < len(path) and (path[i+1] == '"' or path[i+1] == "'"):
                 quote_char = path[i+1]
                 j = i + 2
-                key = ''
+                
+                # 带上引号方便在格式转换时进行判断
+                key = quote_char
                 while j < len(path) and path[j] != quote_char:
                     if path[j] == '\\' and j + 1 < len(path):
                         j += 1
@@ -256,6 +258,7 @@ def parse_path(path: str) -> List[Union[str, int]]:
                     else:
                         key += path[j]
                     j += 1
+                key += quote_char
                 
                 if j < len(path) and path[j] == quote_char and j + 1 < len(path) and path[j+1] == ']':
                     elements.append(_convert_buffer(key))

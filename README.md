@@ -2,11 +2,17 @@
 
 基于路径的Python字典或Json数据查询工具，支持复杂的路径表达式、条件筛选和数据提取。
 
+> [!WARNING]
+> 
+> 主要用于研究学习，暂时还不兼容 JSON Path 语法，主要是写这个模块的时候我还不知道 JSON Path 这个东西...
+> 
+> 后续"可能会"逐步增加对 JSON Path 的兼容，但优先级不高
+
 ## 特性
 
-- 支持类似JSONPath的简洁语法
 - 支持条件表达式过滤
 - 支持通配符和切片操作
+- 支持正则表达式匹配键名
 - 全面的错误处理
 - 完善的类型标注
 - 提供命令行工具
@@ -85,6 +91,44 @@ jsonquerier -f data.json -p "users[*].name" -c
 - `[start:end:step]` 切片操作
 - `['key'==value]` 条件过滤
 - 支持的操作符: `==`, `!=`, `<`, `>`, `<=`, `>=`, `&&`, `||`
+
+## 正则表达式匹配
+
+可以使用正则表达式来匹配JSON对象中的键名：
+
+```python
+from jsonquerier import query_json
+
+# 数据示例
+data = {
+    "root": {
+        "user_001": {"name": "张三", "age": 25},
+        "user_002": {"name": "李四", "age": 30},
+        "user_003": {"name": "王五", "age": 35},
+        "admin_001": {"name": "管理员1", "permissions": ["read", "write"]},
+        "admin_002": {"name": "管理员2", "permissions": ["read"]}
+    }
+}
+
+# 匹配所有用户
+result1 = query_json(data, r"root['^user_\\d+$']")
+# 返回: [{"name": "张三", "age": 25}, {"name": "李四", "age": 30}, {"name": "王五", "age": 35}]
+
+# 获取所有匹配用户的名称
+result2 = query_json(data, r"root['^user_\\d+$'].name")
+# 返回: ["张三", "李四", "王五"]
+
+# 匹配所有管理员的权限(支持点语法，可以不带引号)
+result3 = query_json(data, r"root.regex.^admin_\\d+$.permissions")
+# 返回: [["read", "write"], ["read"]]
+```
+
+正则表达式语法：
+
+- 直接在查询语句中编写正则表达式即可
+- 支持标准的Python正则表达式语法
+- 特殊字符（如 `.` 和 `\`）需要正确转义
+- 匹配成功后返回的是所有匹配键对应的值组成的列表
 
 ## 错误处理
 
