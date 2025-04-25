@@ -7,23 +7,23 @@ import re
 import string
 from typing import Any, Union, List, Dict
 
-from .operators import Opreater
+from ..operator.enum import Operator
 
 class Expression:
     """
     表达式类，用于解析和执行查询表达式
     """
     operator_funcs = {
-        Opreater.EQUAL: lambda x, y: x == y,
-        Opreater.LESS_THAN: lambda x, y: x < y,
-        Opreater.GREATER_THAN: lambda x, y: x > y,
-        Opreater.LESS_EQUAL: lambda x, y: x <= y,
-        Opreater.GREATER_EQUAL: lambda x, y: x >= y,
-        Opreater.NOT_EQUAL: lambda x, y: x != y,
+        Operator.EQUAL: lambda x, y: x == y,
+        Operator.LESS_THAN: lambda x, y: x < y,
+        Operator.GREATER_THAN: lambda x, y: x > y,
+        Operator.LESS_EQUAL: lambda x, y: x <= y,
+        Operator.GREATER_EQUAL: lambda x, y: x >= y,
+        Operator.NOT_EQUAL: lambda x, y: x != y,
     }
     complex_operator_funcs = {
-        Opreater.LOGICAL_AND: lambda x, y: x.right.operate(x.left.operate(y)),
-        Opreater.LOGICAL_OR: lambda x, y: x.left.operate(y) + x.right.operate(y),
+        Operator.LOGICAL_AND: lambda x, y: x.right.operate(x.left.operate(y)),
+        Operator.LOGICAL_OR: lambda x, y: x.left.operate(y) + x.right.operate(y),
     }
     
     def __init__(self, key=None, operator=None, value=None, left=None, right=None):
@@ -45,7 +45,7 @@ class Expression:
         if self.key:
             value = f'"{self.value}"' if isinstance(self.value, str) else self.value
             return f'"{self.key}" {self.operator} {value}'
-        elif self.operator == Opreater.SLICE:
+        elif self.operator == Operator.SLICE:
             return f"{str(self.value.start) if self.value.start is not None else ''}:{str(self.value.stop) if self.value.stop is not None else ''}{f':{str(self.value.step)}' if self.value.step is not None and self.value.step != 1 else ''}"
         elif self.value is not None:
             return self.value
@@ -53,23 +53,22 @@ class Expression:
             return f'({self.left.get_expression()} {self.operator} {self.right.get_expression()})'
 
     def operate(self, data):
-        # 基本运算符
+        # 逻辑操作符
         if self.operator in self.complex_operator_funcs:
             return self.complex_operator_funcs[self.operator](self, data)
         
-        # 逻辑操作符
+        # 比较运算符
         if self.operator in self.operator_funcs:
             itempack_list = []
+            from jsonquerier.core import query_json
             for item_pack in data:
-                from .core import query_json
                 result = query_json(item_pack, self.key, no_path_exception=True)
-                
                 if self.operator_funcs[self.operator](result, self.value):
                     itempack_list.append(item_pack)
             return itempack_list
         
         # 切片索引
-        if self.operator == Opreater.SLICE:
+        if self.operator == Operator.SLICE:
             return data[self.value]
         
         else:
@@ -87,7 +86,7 @@ class Expression:
                               operator=operator,
                               right=Expression.parse(expression[index+len(operator.value):].strip()))
 
-        # 处理比较表达式
+        # 处理基本比较表达式
         match = re.match(r'("[^"]+"|\'[^\']+\')\s*(==|!=|<=|>=|<|>)\s*(\d+|"[^"]+"|\'[^\']+\'|true|True|False|false|None|null)$', expression)
         if match:
             key, operator_str, value = match.groups()
@@ -100,7 +99,7 @@ class Expression:
             
             # 将字符串运算符转换为枚举
             operator = None
-            for op_enum in Opreater:
+            for op_enum in Operator:
                 if op_enum.value == operator_str:
                     operator = op_enum
                     break
@@ -150,7 +149,7 @@ class Expression:
                 if step == 0:
                     raise ValueError(f"切片步长不能为0: [{expression}]")
                 
-                return Expression(operator=Opreater.SLICE, value=slice(start, end, step))
+                return Expression(operator=Operator.SLICE, value=slice(start, end, step))
             
             if isinstance(slice_node, ast.Tuple):
                 # TODO 实现扩展索引(类似list[1,2:3]这种)
@@ -183,7 +182,7 @@ class Expression:
                 depth -= 1
             elif depth == 0 and i + 1 < len(expression):
                 # 检查是否是复杂运算符(&&, ||)
-                for complex_op in [Opreater.LOGICAL_AND, Opreater.LOGICAL_OR]:
+                for complex_op in [Operator.LOGICAL_AND, Operator.LOGICAL_OR]:
                     if expression[i:i+len(complex_op.value)] == complex_op.value:
                         last_operator_index = i
                         operator = complex_op

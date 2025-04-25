@@ -4,9 +4,11 @@
 import re
 from typing import Any, Union, List, Dict
 
+from jsonquerier.expression.base import BaseExpression
+
 from .exceptions import JsonPathError
-from .expression import Expression, parse_path, elements2path
-from .operators import Opreater
+from .operator.enum import Operator
+from .path.parser import PathParser
 
 def query_json(
     data: Union[Dict, List], 
@@ -40,14 +42,14 @@ def query_json(
         json_path = True
         path = path[1:]
     
-    elements = parse_path(path)
+    elements = PathParser.parse(path)
     current = data
     try:
         for idx, element in enumerate(elements):
             if element == '*':
                 # 处理简单通配符
                 if isinstance(current, list):
-                    results = [query_json(item, elements2path(elements[idx+1:]), no_path_exception=True, no_regex=no_regex) for item in current]
+                    results = [query_json(item, PathParser.elements2path(elements[idx+1:]), no_path_exception=True, no_regex=no_regex) for item in current]
                     if all(result == [] for result in results):
                         return []
                     return [result for result in results if result != []]
@@ -81,22 +83,28 @@ def query_json(
                     if idx < len(elements) - 1:
                         results = []
                         for item in matching_elements:
-                            item_result = query_json(current[item], elements2path(elements[idx+1:]), no_path_exception=True, no_regex=no_regex)
+                            item_result = query_json(current[item], PathParser.elements2path(elements[idx+1:]), no_path_exception=True, no_regex=no_regex)
                             if item_result != []:
                                 results.append(item_result)
                         return results if results else []
                     else:
                         # 没有后续路径，直接返回所有匹配元素的值
                         return [current[item] for item in matching_elements]
-            elif isinstance(current, list) and isinstance(element, Expression):
+            elif isinstance(current, list) and isinstance(element, BaseExpression):
                 # 复杂表达式解析
                 result_list = []
-                if not isinstance(element.operator, Opreater):
-                    raise SyntaxError(f"不支持的运算符类型: < {type(element.operator).__name__} >")
-                
-                itempack_list = element.operate(current)
+
+                try:
+                    itempack_list = element.operate(current)
+                except Exception as e:
+                    raise SyntaxError(f"表达式操作失败: {str(e)}")
+                    
+                if not isinstance(itempack_list, (list, tuple)):
+                    itempack_list = [itempack_list]
+                    
                 for item in itempack_list:
-                    item_result = query_json(item, elements2path(elements[idx+1:]), no_path_exception=True, no_regex=no_regex)
+                    item_result = query_json(item, PathParser.elements2path(elements[idx+1:]), 
+                                        no_path_exception=True, no_regex=no_regex)
                     if item_result not in result_list:
                         result_list.append(item_result)
                 return result_list
@@ -111,7 +119,11 @@ def query_json(
         if no_path_exception:
             return []
         else:
-            raise JsonPathError(f"路径错误：<{element}>，错误信息：{str(e)}")
+            # 增加表达式错误的处理
+            if isinstance(element, BaseExpression):
+                raise JsonPathError(f"表达式执行错误：<{element.get_expression()}>，错误信息：{str(e)}")
+            else:
+                raise JsonPathError(f"路径错误：<{element}>，错误信息：{str(e)}")
     return current
 
 def flatten_list(nested_list):

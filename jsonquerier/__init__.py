@@ -7,16 +7,17 @@ JsonQuerier - 基于路径的Json数据查询工具
 __version__ = "0.1.0"
 
 from .exceptions import JsonPathError
-from .operators import Opreater
-from .expression import Expression, parse_path, elements2path
+from .operator.enum import Operator
 from .core import query_json, flatten_list
+
+from .script.manager import script_manager
+
+
 
 __all__ = [
     'JsonPathError', 
-    'Opreater', 
-    'Expression', 
-    'parse_path', 
-    'elements2path',
+    'Operator', 
     'query_json', 
-    'flatten_list'
+    'flatten_list',
+    'script_manager'
 ] 

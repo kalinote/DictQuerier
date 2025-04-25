@@ -3,7 +3,7 @@
 """
 from enum import Enum
 
-class Opreater(Enum):
+class Operator(Enum):
     """
     Operator 枚举类
     用于定义支持的操作符类型，便于后续表达式解析和判断。
