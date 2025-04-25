@@ -45,6 +45,8 @@ class Expression:
         if self.key:
             value = f'"{self.value}"' if isinstance(self.value, str) else self.value
             return f'"{self.key}" {self.operator} {value}'
+        elif self.operator == Opreater.SLICE:
+            return f"{str(self.value.start) if self.value.start is not None else ''}:{str(self.value.stop) if self.value.stop is not None else ''}{f':{str(self.value.step)}' if self.value.step is not None and self.value.step != 1 else ''}"
         elif self.value is not None:
             return self.value
         else:

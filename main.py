@@ -79,7 +79,8 @@ def main():
                             "level3": "深度嵌套数据2"
                         }
                     }
-                }
+                },
+                r"^user_\d+$": "正则表达式键名测试"
             }
         }
     }
@@ -152,6 +153,9 @@ def main():
         #     ["read", "write", "delete"],
         #     ["read", "write"]
         # ]),  # 匹配管理员权限
+        
+        # 8. 正则表达式键名测试(TODO 键名中有正则表达式的会匹配对应键和满足正则表达式的键，如果无需进行正则表达式键匹配，设置no_regex=True)
+        # (r"root.regex['^user_\\d+$']", "正则表达式键名测试"),
     ]
     # 统计变量
     total = len(test_cases)

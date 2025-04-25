@@ -8,7 +8,12 @@ from .exceptions import JsonPathError
 from .expression import Expression, parse_path, elements2path
 from .operators import Opreater
 
-def query_json(data: Union[Dict, List], path: str, no_path_exception: bool = False) -> Any:
+def query_json(
+    data: Union[Dict, List], 
+    path: str, 
+    no_path_exception: bool = False,
+    no_regex: bool = False
+) -> Any:
     r"""查询json数据
 
     Args:
@@ -38,7 +43,6 @@ def query_json(data: Union[Dict, List], path: str, no_path_exception: bool = Fal
     current = data
     try:
         for idx, element in enumerate(elements):
-            # TODO 增加字符串正则表达式
             if element == '*':
                 # 处理简单通配符
                 if isinstance(current, list):
@@ -57,6 +61,7 @@ def query_json(data: Union[Dict, List], path: str, no_path_exception: bool = Fal
                 current = current[element]
             elif isinstance(current, dict):
                 # 字典解析
+                # TODO 增加key刚好是正则表达式的情况处理
                 if element in current:
                     current = current[element]
                 else:
