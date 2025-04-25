@@ -20,6 +20,7 @@ def query_json(
         data (Union[Dict, List]): 需要查询的json结构
         path (str): 查询路径语句
         no_path_exception (bool, optional): 关闭报错，该项设置为True时，查询出错不会产生报错，而是返回空列表[]. Defaults to False.
+        no_regex (bool, optional): TODO 关闭正则表达式匹配，该项设置为True时，不会进行任何正则表达式匹配，如果查询路径中包含正则表达式，会直接报错。Defaults to False.
 
     Raises:
         ValueError: 查询值类型错误
@@ -46,7 +47,7 @@ def query_json(
             if element == '*':
                 # 处理简单通配符
                 if isinstance(current, list):
-                    results = [query_json(item, elements2path(elements[idx+1:]), no_path_exception=True) for item in current]
+                    results = [query_json(item, elements2path(elements[idx+1:]), no_path_exception=True, no_regex=no_regex) for item in current]
                     if all(result == [] for result in results):
                         return []
                     return [result for result in results if result != []]
@@ -65,6 +66,7 @@ def query_json(
                 if element in current:
                     current = current[element]
                 else:
+                    
                     # 正则表达式处理
                     try:
                         regex = re.compile(element)
@@ -79,7 +81,7 @@ def query_json(
                     if idx < len(elements) - 1:
                         results = []
                         for item in matching_elements:
-                            item_result = query_json(current[item], elements2path(elements[idx+1:]), no_path_exception=True)
+                            item_result = query_json(current[item], elements2path(elements[idx+1:]), no_path_exception=True, no_regex=no_regex)
                             if item_result != []:
                                 results.append(item_result)
                         return results if results else []
@@ -94,7 +96,7 @@ def query_json(
                 
                 itempack_list = element.operate(current)
                 for item in itempack_list:
-                    item_result = query_json(item, elements2path(elements[idx+1:]), no_path_exception=True)
+                    item_result = query_json(item, elements2path(elements[idx+1:]), no_path_exception=True, no_regex=no_regex)
                     if item_result not in result_list:
                         result_list.append(item_result)
                 return result_list
@@ -106,7 +108,10 @@ def query_json(
         else:
             raise e
     except (KeyError, IndexError, TypeError, ValueError) as e:
-        raise JsonPathError(f"路径错误：<{element}>，错误信息：{str(e)}")
+        if no_path_exception:
+            return []
+        else:
+            raise JsonPathError(f"路径错误：<{element}>，错误信息：{str(e)}")
     return current
 
 def flatten_list(nested_list):
