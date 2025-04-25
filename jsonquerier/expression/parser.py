@@ -32,8 +32,18 @@ class ExpressionParser:
                 operator=operator
             )
 
+        # TODO 首先判断表达式中是否有脚本运算
+        script_calls = re.findall(r'@[a-zA-Z_][a-zA-Z0-9_]*\(.*\)', expression)
+        if script_calls:
+            raise NotImplementedError(f"脚本运算暂未实现: {script_calls}")
+        for call in script_calls:
+            script = ast.parse(call, mode='eval')
+            if not isinstance(script, ast.Call):
+                raise SyntaxError(f"表达式符合脚本格式 <{call}>，但解析错误: {expression}")
+
         # 处理基本比较表达式
-        match = re.match(r'("[^"]+"|\'[^\']+\')\s*(==|!=|<=|>=|<|>)\s*(\d+|"[^"]+"|\'[^\']+\'|true|True|False|false|None|null)$', expression)
+        # match = re.match(r'^("[^"]+"|\'[^\']+\')\s*(==|!=|<=|>=|<|>)\s*(\d+|"[^"]+"|\'[^\']+\'|true|True|False|false|None|null)$', expression)
+        match = re.match(r'^(.+)\s*(==|!=|<=|>=|<|>)\s*(.+)$', expression)
         if match:
             key, operator_str, value = match.groups()
             key = key.strip("'").strip('"')
@@ -66,8 +76,7 @@ class ExpressionParser:
         # 单个通配符
         if expression == "*":
             return LiteralExpression("*")
-        
-        # 处理复杂切片索引
+
         # 处理复杂切片索引
         try:
             tree = ast.parse(f"__slice_check_{''.join(random.choices(string.ascii_letters + string.digits, k=8))}__[{expression}]", mode='eval')

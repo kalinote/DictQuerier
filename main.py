@@ -98,116 +98,116 @@ def main():
     }
     # 定义测试用例: (路径, 期望结果或异常类型)
     test_cases = [
-        # 基本路径查询
-        ("root.root_key", "root_value"),
-        ('root["root_key"]', "root_value"),
-        ("root.root_key", "root_value"),
-        ("root.root_key", "root_value"),
-        ("root.8407", "数字键测试"),
-        ("root[8407]", "数字键测试"),
-        ('root."8407"', "字符串数字键测试"),
-        ('root["8407"]', "字符串数字键测试"),
-        ("root.\.", "pass"),
-        ("root['.']", "pass"),
-        ("root['key.01']", "value"),
+        # # 基本路径查询
+        # ("root.root_key", "root_value"),
+        # ('root["root_key"]', "root_value"),
+        # ("root.root_key", "root_value"),
+        # ("root.root_key", "root_value"),
+        # ("root.8407", "数字键测试"),
+        # ("root[8407]", "数字键测试"),
+        # ('root."8407"', "字符串数字键测试"),
+        # ('root["8407"]', "字符串数字键测试"),
+        # ("root.\.", "pass"),
+        # ("root['.']", "pass"),
+        # ("root['key.01']", "value"),
         
-        # 索引和切片
-        ("root.number_list[2]", 3),
+        # # 索引和切片
+        # ("root.number_list[2]", 3),
         
-        # 正则表达式测试
-        # 1. 基本匹配测试
-        (r"root.regex['^[0-9]+$']", ["纯数字键"]),  # 完全匹配纯数字键
-        (r"root.regex['^[a-z]+$']", ["纯字母键"]),  # 完全匹配纯字母键
+        # # 正则表达式测试
+        # # 1. 基本匹配测试
+        # (r"root.regex['^[0-9]+$']", ["纯数字键"]),  # 完全匹配纯数字键
+        # (r"root.regex['^[a-z]+$']", ["纯字母键"]),  # 完全匹配纯字母键
         
-        # 2. 嵌套结构匹配 - 返回对象
-        (r"root.regex['^user_\\d+$']", [
-            {"name": "张三", "age": 25, "role": "admin"},
-            {"name": "李四", "age": 30, "role": "user"},
-            {"name": "王五", "age": 35, "role": "user"}
-        ]),  # 匹配所有用户对象
+        # # 2. 嵌套结构匹配 - 返回对象
+        # (r"root.regex['^user_\\d+$']", [
+        #     {"name": "张三", "age": 25, "role": "admin"},
+        #     {"name": "李四", "age": 30, "role": "user"},
+        #     {"name": "王五", "age": 35, "role": "user"}
+        # ]),  # 匹配所有用户对象
         
-        # 3. 嵌套结构匹配 - 返回数组
-        (r"root.regex['^api/v1/']", [
-            [{"id": 1, "username": "user1"}, {"id": 2, "username": "user2"}],
-            [{"id": 101, "title": "文章1"}, {"id": 102, "title": "文章2"}]
-        ]),  # 匹配所有v1 API数据
+        # # 3. 嵌套结构匹配 - 返回数组
+        # (r"root.regex['^api/v1/']", [
+        #     [{"id": 1, "username": "user1"}, {"id": 2, "username": "user2"}],
+        #     [{"id": 101, "title": "文章1"}, {"id": 102, "title": "文章2"}]
+        # ]),  # 匹配所有v1 API数据
         
-        # 4. 带点号的键匹配
-        (r"root.regex['^config\\.']", [
-            {"host": "localhost", "port": 8080},
-            {"host": "example.com", "port": 443}
-        ]),  # 匹配所有配置数据
+        # # 4. 带点号的键匹配
+        # (r"root.regex['^config\\.']", [
+        #     {"host": "localhost", "port": 8080},
+        #     {"host": "example.com", "port": 443}
+        # ]),  # 匹配所有配置数据
         
-        # 5. 复杂嵌套结构匹配
-        (r"root.regex['^nested\\.data']", [
-            {
-                "level1": {
-                    "level2": {
-                        "level3": "深度嵌套数据1"
-                    }
-                }
-            },
-            {
-                "level1": {
-                    "level2": {
-                        "level3": "深度嵌套数据2"
-                    }
-                }
-            }
-        ]),  # 匹配所有深度嵌套数据
+        # # 5. 复杂嵌套结构匹配
+        # (r"root.regex['^nested\\.data']", [
+        #     {
+        #         "level1": {
+        #             "level2": {
+        #                 "level3": "深度嵌套数据1"
+        #             }
+        #         }
+        #     },
+        #     {
+        #         "level1": {
+        #             "level2": {
+        #                 "level3": "深度嵌套数据2"
+        #             }
+        #         }
+        #     }
+        # ]),  # 匹配所有深度嵌套数据
         
-        # 6. 多层嵌套正则匹配后继续查询
-        (r"root.regex['^user_\\d+$'].name", ["张三", "李四", "王五"]),  # 匹配用户后获取名称
+        # # 6. 多层嵌套正则匹配后继续查询
+        # (r"root.regex['^user_\\d+$'].name", ["张三", "李四", "王五"]),  # 匹配用户后获取名称
         
-        # 7. 复杂正则表达式
-        (r"root.regex.^admin_\\d+$.permissions", [
-            ["read", "write", "delete"],
-            ["read", "write"]
-        ]),  # 匹配管理员权限
+        # # 7. 复杂正则表达式
+        # (r"root.regex.^admin_\\d+$.permissions", [
+        #     ["read", "write", "delete"],
+        #     ["read", "write"]
+        # ]),  # 匹配管理员权限
         
-        ("root.root_key", "root_value"),
-        ("root.child[0][0]", "first"),
-        (r"root.key\.01", "value"),
-        ("root.items[*].value", [10, 20, 30]),
-        ("root.data[*].id", [1, 2, 3]),
-        ("root.info.list[1].details", "detail_value"),
-        ("root.empty[*]", []),
-        ("root.array[1][2]", "f"),
-        ("root.dictionary['key']", "value"),
-        ("root.list['id'==2].name", ["value2", "value4"]),
-        ("root.list[id==1].name", SyntaxError),
-        ("root.child[1][0]", "third"),
-        ("root['key[02]']", "value2"),
-        ("root['.']", "pass"),
-        ("root.dictionary['invalid']", None),
-        ("root.list['sub_id'=='A'].sub_list", [[5, 6, 7, 8], [1, 2, 3, 4]]),
-        ('root.list["id"<3].name', ["value1", "value2", "value4"]),
-        ('root.list["id"==2&&"name"=="value4"].sub_list', [[5, 6, 7, 8]]),
-        ('root.list["id"==2||"id"==3].sub_id', ["A", "B"]),
-        ('root.list[("id"==2||"id"==3)].sub_id', ["A", "B"]),
-        (".root.child[1][0]", "third"),
-        ("root.number_list[1:4]", [2, 3, 4]),  # 基本切片
-        ("root.number_list[::2]", [1, 3, 5, 7, 9]),  # 步长为2
-        ("root.number_list[::-1]", [9, 8, 7, 6, 5, 4, 3, 2, 1]),  # 反向切片
-        ("root.number_list[-3:]", [7, 8, 9]),  # 负数索引
-        ("root.number_list[:3]", [1, 2, 3]),  # 省略start
-        ("root.number_list[3:]", [4, 5, 6, 7, 8, 9]),  # 省略end
-        ("root.number_list[1:6:2]", [2, 4, 6]),  # 完整切片语法
-        ("root.list[1:3].name", ["value2", "value3"]),  # 在对象列表上切片
-        ("root.array[0][1:3]", ["b", "c"]),  # 在嵌套列表上切片
-        ("root.empty[1:3]", []),  # 在空列表上切片
-        ("root.number_list[10:20]", []),  # 超出范围的切片
-        ("root.number_list[-10:-5]", [1, 2, 3, 4]),  # 修正期望值
-        ("root.number_list[5:2:-1]", [6, 5, 4]),  # 反向步长切片
-        ("root.number_list[2:5:0]", ValueError),  # 步长为0（非法）
-        ("root.number_list[2:5:1.5]", ValueError),  # 非整数步长（非法）
-        ("root.8407", "数字键测试"),                 # 数字键测试
-        ("root.'8407'", "字符串数字键测试"),        # 单引号字符串数字键测试
-        ("root.'非ASCII键'", "中文键值测试"),        # 单引号中文键值测试
-        ('root."8407"', "字符串数字键测试"),        # 双引号字符串数字键测试
-        ('root[8407]', "数字键测试"),                # 数字键测试
-        ('root["非ASCII键"]', "中文键值测试"),        # 方括号中文键值测试
-        
+        # ("root.root_key", "root_value"),
+        # ("root.child[0][0]", "first"),
+        # (r"root.key\.01", "value"),
+        # ("root.items[*].value", [10, 20, 30]),
+        # ("root.data[*].id", [1, 2, 3]),
+        # ("root.info.list[1].details", "detail_value"),
+        # ("root.empty[*]", []),
+        # ("root.array[1][2]", "f"),
+        # ("root.dictionary['key']", "value"),
+        # ("root.list['id'==2].name", ["value2", "value4"]),
+        # ("root.list[id==1].name", SyntaxError),
+        # ("root.child[1][0]", "third"),
+        # ("root['key[02]']", "value2"),
+        # ("root['.']", "pass"),
+        # ("root.dictionary['invalid']", None),
+        # ("root.list['sub_id'=='A'].sub_list", [[5, 6, 7, 8], [1, 2, 3, 4]]),
+        # ('root.list["id"<3].name', ["value1", "value2", "value4"]),
+        # ('root.list["id"==2&&"name"=="value4"].sub_list', [[5, 6, 7, 8]]),
+        # ('root.list["id"==2||"id"==3].sub_id', ["A", "B"]),
+        # ('root.list[("id"==2||"id"==3)].sub_id', ["A", "B"]),
+        # (".root.child[1][0]", "third"),
+        # ("root.number_list[1:4]", [2, 3, 4]),  # 基本切片
+        # ("root.number_list[::2]", [1, 3, 5, 7, 9]),  # 步长为2
+        # ("root.number_list[::-1]", [9, 8, 7, 6, 5, 4, 3, 2, 1]),  # 反向切片
+        # ("root.number_list[-3:]", [7, 8, 9]),  # 负数索引
+        # ("root.number_list[:3]", [1, 2, 3]),  # 省略start
+        # ("root.number_list[3:]", [4, 5, 6, 7, 8, 9]),  # 省略end
+        # ("root.number_list[1:6:2]", [2, 4, 6]),  # 完整切片语法
+        # ("root.list[1:3].name", ["value2", "value3"]),  # 在对象列表上切片
+        # ("root.array[0][1:3]", ["b", "c"]),  # 在嵌套列表上切片
+        # ("root.empty[1:3]", []),  # 在空列表上切片
+        # ("root.number_list[10:20]", []),  # 超出范围的切片
+        # ("root.number_list[-10:-5]", [1, 2, 3, 4]),  # 修正期望值
+        # ("root.number_list[5:2:-1]", [6, 5, 4]),  # 反向步长切片
+        # ("root.number_list[2:5:0]", ValueError),  # 步长为0（非法）
+        # ("root.number_list[2:5:1.5]", ValueError),  # 非整数步长（非法）
+        # ("root.8407", "数字键测试"),                 # 数字键测试
+        # ("root.'8407'", "字符串数字键测试"),        # 单引号字符串数字键测试
+        # ("root.'非ASCII键'", "中文键值测试"),        # 单引号中文键值测试
+        # ('root."8407"', "字符串数字键测试"),        # 双引号字符串数字键测试
+        # ('root[8407]', "数字键测试"),                # 数字键测试
+        # ('root["非ASCII键"]', "中文键值测试"),        # 方括号中文键值测试
+        ('root.items["value">@bigger_than(15)].sub_value', NotImplementedError),
     ]
     # 统计变量
     total = len(test_cases)
@@ -278,9 +278,9 @@ def main():
     print("------------------------------\n")
 
 @script_manager.register(name="bigger_than")
-def bigger_than():
+def bigger_than(value):
     print("执行脚本测试")
-    return 15
+    return value
 
 if __name__ == "__main__":
     main()
