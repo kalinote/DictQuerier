@@ -11,6 +11,10 @@ class LogicalOperatorHandler(OperatorHandlerBase):
     @staticmethod
     def execute(expression: BaseExpression, data) -> bool:
         raise NotImplementedError("逻辑运算符处理类必须实现execute方法")
+    
+    @staticmethod
+    def compare(left, right) -> bool:
+        return NotImplementedError("逻辑运算符暂不支持compare方法")
 
 
 class AndOperatorHandler(LogicalOperatorHandler):

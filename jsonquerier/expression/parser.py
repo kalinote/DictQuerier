@@ -18,7 +18,6 @@ class ExpressionParser:
     
     @staticmethod
     def parse(expression: str) -> BaseExpression:
-        # TODO 将解析逻辑从Expression类中拆分出来
         expression = expression.strip()
         if expression.startswith("(") and expression.endswith(")"):
             return ExpressionParser.parse(expression[1:-1])

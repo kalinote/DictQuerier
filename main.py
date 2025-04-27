@@ -98,18 +98,17 @@ def main():
     }
     # 定义测试用例: (路径, 期望结果或异常类型)
     test_cases = [
-        # # 基本路径查询
-        # ("root.root_key", "root_value"),
-        # ('root["root_key"]', "root_value"),
-        # ("root.root_key", "root_value"),
-        # ("root.root_key", "root_value"),
-        # ("root.8407", "数字键测试"),
-        # ("root[8407]", "数字键测试"),
-        # ('root."8407"', "字符串数字键测试"),
-        # ('root["8407"]', "字符串数字键测试"),
-        # ("root.\.", "pass"),
-        # ("root['.']", "pass"),
-        # ("root['key.01']", "value"),
+        # 基本路径查询
+        ("root.root_key", "root_value"),          # 点操作符查询
+        ('root["root_key"]', "root_value"),       # 方括号查询
+        ("root.8407", "数字键测试"),                # 整数类型数据方括号查询
+        ("root[8407]", "数字键测试"),               # 整数类型数据点操作符查询
+        ('root."8407"', "字符串数字键测试"),         # 数字字符串点操作符查询
+        ('root["8407"]', "字符串数字键测试"),        # 数字字符串方括号查询
+        ("root.\.", "pass"),                      # 以点为键的点操作符查询
+        ("root['.']", "pass"),                    # 以点为键的方括号查询
+        ("root['key.01']", "value"),              # 键包含点的方括号查询
+        ("root.key\.01", "value"),                # 键包含点的点操作符查询
         
         # # 索引和切片
         # ("root.number_list[2]", 3),
@@ -175,7 +174,7 @@ def main():
         # ("root.array[1][2]", "f"),
         # ("root.dictionary['key']", "value"),
         # ("root.list['id'==2].name", ["value2", "value4"]),
-        # ("root.list[id==1].name", SyntaxError),
+        # ("root.list[id==1].name", ['value1']),
         # ("root.child[1][0]", "third"),
         # ("root['key[02]']", "value2"),
         # ("root['.']", "pass"),
@@ -207,7 +206,7 @@ def main():
         # ('root."8407"', "字符串数字键测试"),        # 双引号字符串数字键测试
         # ('root[8407]', "数字键测试"),                # 数字键测试
         # ('root["非ASCII键"]', "中文键值测试"),        # 方括号中文键值测试
-        ('root.items["value">@bigger_than(15)].sub_value', NotImplementedError),
+        # ('root.items["value">@bigger_than(15)].sub_value', NotImplementedError),
     ]
     # 统计变量
     total = len(test_cases)
