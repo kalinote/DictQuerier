@@ -1,12 +1,15 @@
-
-
 import ast
 from typing import List, Union
 
 from jsonquerier.expression.base import BaseExpression
-from jsonquerier.expression.literal import LiteralExpression
-from jsonquerier.expression.parser import ExpressionParser
+from jsonquerier.expression.types.literal import LiteralExpression
+from jsonquerier.expression.parser.parser import ExpressionParser
 
+from jsonquerier.path.node.base import BaseNode
+from jsonquerier.path.node.expression import ExpressionNode
+from jsonquerier.path.node.key import KeyNode
+from jsonquerier.path.node.wildcard import WildcardNode
+from jsonquerier.path.node.index import IndexNode
 
 class PathParser:
     """
@@ -14,8 +17,8 @@ class PathParser:
     """
     
     @staticmethod
-    def parse(path: str) -> List[Union[str, int]]:
-        elements = []
+    def parse(path: str) -> List[BaseNode]:
+        nodes = []
         buffer = ''
         escaped = False
         i = 0
@@ -54,11 +57,11 @@ class PathParser:
                 escaped = True
             elif path[i] == '.':
                 if buffer:
-                    elements.append(_convert_buffer(buffer))
+                    nodes.append(PathParser._to_node(_convert_buffer(buffer)))
                     buffer = ''
             elif path[i] == '[':
                 if buffer:
-                    elements.append(_convert_buffer(buffer))
+                    nodes.append(PathParser._to_node(_convert_buffer(buffer)))
                     buffer = ''
                 # 检查是否是简单的字符串键访问（带引号的键名）
                 if i + 1 < len(path) and (path[i+1] == '"' or path[i+1] == "'"):
@@ -77,7 +80,7 @@ class PathParser:
                     key += quote_char
                     
                     if j < len(path) and path[j] == quote_char and j + 1 < len(path) and path[j+1] == ']':
-                        elements.append(_convert_buffer(key))
+                        nodes.append(PathParser._to_node(_convert_buffer(key)))
                         i = j + 1  # 跳到 ']' 之后
                     else:
                         # 如果不是简单的键访问，则按表达式处理
@@ -91,13 +94,7 @@ class PathParser:
                             raise SyntaxError("未关闭的方括号")
                         
                         expression = ExpressionParser.parse(inside_syntax)
-                        
-                        if isinstance(expression, LiteralExpression):
-                            # 索引key或下标
-                            elements.append(expression.value)
-                        else:
-                            # 表达式
-                            elements.append(expression)
+                        nodes.append(PathParser._to_node(expression.value if isinstance(expression, LiteralExpression) else expression))
                         buffer = ''
                         i += len(inside_syntax) + 1  # 包含最后的']'
                 else:
@@ -111,39 +108,31 @@ class PathParser:
                         raise SyntaxError("未关闭的方括号")
                     
                     expression = ExpressionParser.parse(inside_syntax)
-                    
-                    if isinstance(expression, LiteralExpression):
-                        # 索引key、下标、切片
-                        elements.append(expression.value)
-                    else:
-                        # 表达式
-                        elements.append(expression)
+                    nodes.append(PathParser._to_node(expression.value if isinstance(expression, LiteralExpression) else expression))
                     buffer = ''
                     i += len(inside_syntax) + 1  # 包含最后的']'
             else:
                 buffer += path[i]
             i += 1
         if buffer:  # 确保最后一个元素被添加
-            elements.append(_convert_buffer(buffer))
-        return elements
+            nodes.append(PathParser._to_node(_convert_buffer(buffer)))
+        return nodes
 
     @staticmethod
-    def elements2path(elements: List[Union[str, int]]) -> str:
+    def nodes2path(nodes: List[BaseNode]) -> str:
         """将路径元素列表转换为路径字符串"""
         path = ""
-        for idx, element in enumerate(elements):
-            if isinstance(element, str):
-                if element == "*":
-                    # TODO 暂时这么写，因为目前通配符还没有其他作用
-                    path = path.rstrip('.') + "[*]"
-                else:
-                    path += element
-            elif isinstance(element, int):
-                path = path.rstrip('.') + f"[{element}]"
-            elif isinstance(element, BaseExpression):
-                path = path.rstrip('.') + f"[{element.get_expression()}]"
-            else:
-                path += str(element)
-            if idx < len(elements)-1:
-                path += "."
+        for idx, node in enumerate(nodes):
+            path += node.get_path()
         return path 
+
+    @staticmethod
+    def _to_node(val):
+        if isinstance(val, BaseExpression):
+            return ExpressionNode(val)
+        if isinstance(val, int):
+            return IndexNode(val)
+        if isinstance(val, str) and val == "*":
+            return WildcardNode()
+        # 其它情况当作 key
+        return KeyNode(val)

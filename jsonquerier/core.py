@@ -42,14 +42,16 @@ def query_json(
         json_path = True
         path = path[1:]
     
-    elements = PathParser.parse(path)
+    nodes = PathParser.parse(path)
     current = data
     try:
-        for idx, element in enumerate(elements):
-            if element == '*':
+        for idx, node in enumerate(nodes):
+            # 临时过渡
+            node = node.get_value()
+            if node == '*':
                 # 处理简单通配符
                 if isinstance(current, list):
-                    results = [query_json(item, PathParser.elements2path(elements[idx+1:]), no_path_exception=True, no_regex=no_regex) for item in current]
+                    results = [query_json(item, PathParser.nodes2path(nodes[idx+1:]), no_path_exception=True, no_regex=no_regex) for item in current]
                     if all(result == [] for result in results):
                         return []
                     return [result for result in results if result != []]
@@ -57,45 +59,46 @@ def query_json(
                     current = list(current.values())
                 else:
                     raise ValueError(f"通配符位置错误，当前数据不是列表: {current}")
-            elif isinstance(current, list) and isinstance(element, int):
+            elif isinstance(current, list) and isinstance(node, int):
                 # 基础列表索引解析
-                if element >= len(current):
-                    raise IndexError(f"数组访问越界: < {element} >")
-                current = current[element]
+                if node >= len(current):
+                    raise IndexError(f"数组访问越界: < {node} >")
+                current = current[node]
             elif isinstance(current, dict):
                 # 字典解析
                 # TODO 增加key刚好是正则表达式的情况处理
-                if element in current:
-                    current = current[element]
+                if node in current:
+                    current = current[node]
                 else:
                     
                     # 正则表达式处理
                     try:
-                        regex = re.compile(element)
+                        regex = re.compile(node)
                     except re.error as e:
-                        raise JsonPathError(f"路径错误或类型不匹配，或者是不合法的正则表达式：<{element}>")
-                    matching_elements = [item for item in current.keys() if regex.search(str(item))]
+                        raise JsonPathError(f"路径错误或类型不匹配，或者是不合法的正则表达式：<{node}>")
+                    matching_nodes = [item for item in current.keys() if regex.search(str(item))]
                     
-                    if len(matching_elements) == 0:
-                        raise JsonPathError(f"已解析正则表达式，但未找到匹配的元素：<{element}>")
+                    if len(matching_nodes) == 0:
+                        raise JsonPathError(f"已解析正则表达式，但未找到匹配的元素：<{node}>")
                     
                     # 如果有后续路径，则为每个匹配元素递归应用
-                    if idx < len(elements) - 1:
+                    if idx < len(nodes) - 1:
                         results = []
-                        for item in matching_elements:
-                            item_result = query_json(current[item], PathParser.elements2path(elements[idx+1:]), no_path_exception=True, no_regex=no_regex)
+                        for item in matching_nodes:
+                            item_result = query_json(current[item], PathParser.nodes2path(nodes[idx+1:]), no_path_exception=True, no_regex=no_regex)
                             if item_result != []:
                                 results.append(item_result)
                         return results if results else []
                     else:
                         # 没有后续路径，直接返回所有匹配元素的值
-                        return [current[item] for item in matching_elements]
-            elif isinstance(current, list) and isinstance(element, BaseExpression):
+                        return [current[item] for item in matching_nodes]
+            elif isinstance(current, list) and isinstance(node, BaseExpression):
                 # 复杂表达式解析
                 result_list = []
 
                 try:
-                    itempack_list = element.operate(current)
+                    # FIXME 多层逻辑表达式存在查询问题
+                    itempack_list = node.operate(current)
                 except Exception as e:
                     raise SyntaxError(f"表达式操作失败: {str(e)}")
                     
@@ -103,13 +106,13 @@ def query_json(
                     itempack_list = [itempack_list]
                     
                 for item in itempack_list:
-                    item_result = query_json(item, PathParser.elements2path(elements[idx+1:]), 
+                    item_result = query_json(item, PathParser.nodes2path(nodes[idx+1:]), 
                                         no_path_exception=True, no_regex=no_regex)
                     if item_result not in result_list:
                         result_list.append(item_result)
                 return result_list
             else:
-                raise JsonPathError(f"路径错误或类型不匹配：<{element}>")
+                raise JsonPathError(f"路径错误或类型不匹配：<{node}>")
     except JsonPathError as e:
         if no_path_exception:
             return []
@@ -120,10 +123,10 @@ def query_json(
             return []
         else:
             # 增加表达式错误的处理
-            if isinstance(element, BaseExpression):
-                raise JsonPathError(f"表达式执行错误：<{element.get_expression()}>，错误信息：{str(e)}")
+            if isinstance(node, BaseExpression):
+                raise JsonPathError(f"表达式执行错误：<{node.get_expression()}>，错误信息：{str(e)}")
             else:
-                raise JsonPathError(f"路径错误：<{element}>，错误信息：{str(e)}")
+                raise JsonPathError(f"路径错误：<{node}>，错误信息：{str(e)}")
     return current
 
 def flatten_list(nested_list):
@@ -137,9 +140,9 @@ def flatten_list(nested_list):
         list: 展开后的一维列表
     """
     result = []
-    for element in nested_list:
-        if isinstance(element, list):
-            result.extend(flatten_list(element))  # 递归展开子列表
+    for node in nested_list:
+        if isinstance(node, list):
+            result.extend(flatten_list(node))  # 递归展开子列表
         else:
-            result.append(element)  # 添加非列表元素
+            result.append(node)  # 添加非列表元素
     return result 

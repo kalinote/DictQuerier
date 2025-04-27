@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from jsonquerier.operator.enum import Operator
 from jsonquerier.operator.register import OperatorRegister
 
-
 class BaseExpression(ABC):
     """
     表达式基类，所有表达式类都必须继承自该类

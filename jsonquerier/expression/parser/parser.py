@@ -2,13 +2,12 @@ import ast
 import random
 import re
 import string
-from typing import TypeVar
 
 from jsonquerier.expression.base import BaseExpression
-from jsonquerier.expression.comparison import ComparisonExpression
-from jsonquerier.expression.literal import LiteralExpression
-from jsonquerier.expression.logical import LogicalExpression
-from jsonquerier.expression.slice import SliceExpression
+from jsonquerier.expression.types.comparison import ComparisonExpression
+from jsonquerier.expression.types.literal import LiteralExpression
+from jsonquerier.expression.types.logical import LogicalExpression
+from jsonquerier.expression.types.slice import SliceExpression
 from jsonquerier.operator.enum import Operator
 
 class ExpressionParser:

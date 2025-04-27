@@ -13,7 +13,7 @@ class CompareOperatorHandler(OperatorHandlerBase):
         raise NotImplementedError("比较运算符处理类必须实现compare方法")
     
     @staticmethod
-    def execute(expression, data) -> bool:
+    def execute(expression, data) -> list:
         return NotImplementedError("比较运算符暂不支持execute方法")
 
 
