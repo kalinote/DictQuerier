@@ -1,6 +1,6 @@
-# dictquerier
+# DictQuerier
 
-基于路径的Python字典或Json数据查询工具，支持复杂的路径表达式、条件筛选和数据提取。
+基于路径的Python字典数据查询工具，支持复杂的路径表达式、条件筛选和数据提取。
 
 > [!WARNING]
 > 

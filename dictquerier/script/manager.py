@@ -13,6 +13,9 @@ class ScriptManager:
             return func
         return decorator
     
+    def check_script(self, name):
+        return name in self.scripts
+    
     def run(self, name, *args, **kwargs):
         if name not in self.scripts:
             raise ValueError(f"脚本 {name} 未注册")

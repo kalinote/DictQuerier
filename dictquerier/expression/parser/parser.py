@@ -3,12 +3,15 @@ import random
 import re
 import string
 
+from dictquerier.exceptions import ExpressionParsingError, ScriptNotRegisteredError
 from dictquerier.expression.base import BaseExpression
 from dictquerier.expression.types.comparison import ComparisonExpression
 from dictquerier.expression.types.literal import LiteralExpression
 from dictquerier.expression.types.logical import LogicalExpression
+from dictquerier.expression.types.script import ScriptExpression
 from dictquerier.expression.types.slice import SliceExpression
 from dictquerier.operator.enum import Operator
+from dictquerier.script.manager import script_manager
 
 class ExpressionParser:
     """
@@ -43,14 +46,28 @@ class ExpressionParser:
                 operator=operator
             )
 
-        # TODO 首先判断表达式中是否有脚本运算
+        # 首先判断表达式中是否有脚本运算
         script_calls = re.findall(r'@[a-zA-Z_][a-zA-Z0-9_]*\(.*\)', expression)
-        if script_calls:
-            raise NotImplementedError(f"脚本运算暂未实现: {script_calls}")
         for call in script_calls:
-            script = ast.parse(call, mode='eval')
-            if not isinstance(script, ast.Call):
-                raise SyntaxError(f"表达式符合脚本格式 <{call}>，但解析错误: {expression}")
+            call = call[1:]
+            try:
+                tree = ast.parse(call, mode='eval')
+                call_node = tree.body
+
+                if not isinstance(call_node, ast.Call):
+                    raise ExpressionParsingError(f"表达式符合脚本格式 <{call}>，但解析错误，解析结果为 {call_node}")
+
+                func_name = ExpressionParser._get_func_name(call_node.func)
+                args = [ExpressionParser._arg_to_str(arg) for arg in call_node.args]
+                keywords = {kw.arg: ExpressionParser._arg_to_str(kw.value) for kw in call_node.keywords}
+
+                expression = ScriptExpression(func_name, args, keywords)
+                
+                # TODO 进一步处理脚本表达式，同时语法解析可能仍需优化
+
+            except Exception as e:
+                raise ExpressionParsingError(f"解析表达式 <{call}> 出错: {e}")
+            
 
         # 处理基本比较表达式
         # match = re.match(r'^("[^"]+"|\'[^\']+\')\s*(==|!=|<=|>=|<|>)\s*(\d+|"[^"]+"|\'[^\']+\'|true|True|False|false|None|null)$', expression)
@@ -150,3 +167,31 @@ class ExpressionParser:
             if op_enum.value == operator_str:
                 return op_enum
         raise SyntaxError(f"未知的运算符: {operator_str}")
+
+    @staticmethod
+    def _get_func_name(func_node):
+        """处理函数名 func() / obj.method() / module.sub.func()
+        """
+        if isinstance(func_node, ast.Name):
+            return func_node.id
+        elif isinstance(func_node, ast.Attribute):
+            return ExpressionParser._get_func_name(func_node.value) + '.' + func_node.attr
+        else:
+            raise None
+
+    @staticmethod
+    # 处理参数
+    def _arg_to_str(node):
+        from dictquerier.path.parser import PathParser
+        if isinstance(node, ast.Name):
+            return PathParser._convert_buffer(node.id)
+        elif isinstance(node, ast.Constant):  # py3.6+
+            return PathParser._convert_buffer(repr(node.value))
+        elif isinstance(node, ast.Str):
+            return PathParser._convert_buffer(repr(node.s))
+        elif isinstance(node, ast.Num):
+            return PathParser._convert_buffer(repr(node.n))
+        elif isinstance(node, ast.NameConstant):
+            return PathParser._convert_buffer(repr(node.value))
+        else:
+            return PathParser._convert_buffer(ast.dump(node))

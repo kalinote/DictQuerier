@@ -1,5 +1,5 @@
 from dictquerier import query_json, flatten_list, script_manager
-from dictquerier.exceptions import JsonPathError
+from dictquerier.exceptions import JsonPathError, ScriptNotRegisteredError
 
 def main():
     # 生成用于测试的示例JSON数据
@@ -206,8 +206,8 @@ def main():
         # ('root."8407"', "字符串数字键测试"),        # 双引号字符串数字键测试
         # ('root[8407]', "数字键测试"),                # 数字键测试
         # ('root["非ASCII键"]', "中文键值测试"),        # 方括号中文键值测试
-        # ('root.items["value">@bigger_than(15)].sub_value', NotImplementedError),
-        ('root.list[( "id"==2 && "name"=="value4" ) || ( "id"==2 && "sub_id" == "A" )].sub_list', [[5, 6, 7, 8], [1, 2, 3, 4]]),
+        ('root.items["value">@bigger_than(15)].sub_value', NotImplementedError),
+        ('root.items["value">@not_registered(15, num=1, s="test")].sub_value', ScriptNotRegisteredError),
     ]
     # 统计变量
     total = len(test_cases)
