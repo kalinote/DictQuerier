@@ -207,8 +207,7 @@ def main():
         # ('root[8407]', "数字键测试"),                # 数字键测试
         # ('root["非ASCII键"]', "中文键值测试"),        # 方括号中文键值测试
         # ('root.items["value">@bigger_than(15)].sub_value', NotImplementedError),
-        ('root.list[( "id"==2 && "name"=="value4" ) || ( "id"==2 && "sub_id" == "A" )].sub_list', [[1,2,3,4],[5, 6, 7, 8]]),
-        # FIXME 多层逻辑表达式存在查询问题
+        ('root.list[( "id"==2 && "name"=="value4" ) || ( "id"==2 && "sub_id" == "A" )].sub_list', [[5, 6, 7, 8], [1, 2, 3, 4]]),
     ]
     # 统计变量
     total = len(test_cases)
