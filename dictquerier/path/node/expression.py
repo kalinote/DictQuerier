@@ -1,5 +1,5 @@
 from typing import Any
-from jsonquerier.expression.base import BaseExpression
+from dictquerier.expression.base import BaseExpression
 from .base import BaseNode
 
 class ExpressionNode(BaseNode):

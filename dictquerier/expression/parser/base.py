@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from ast import List
 from typing import Any, Optional, Union
 
-from jsonquerier.expression.base import BaseExpression
-from jsonquerier.operator.enum import Operator
+from dictquerier.expression.base import BaseExpression
+from dictquerier.operator.enum import Operator
 
 class BaseParser(ABC):
     """

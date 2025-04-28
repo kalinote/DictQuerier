@@ -1,6 +1,6 @@
 
-from jsonquerier.operator.base import OperatorHandlerBase
-from jsonquerier.operator.enum import Operator
+from dictquerier.operator.base import OperatorHandlerBase
+from dictquerier.operator.enum import Operator
 
 
 class OperatorRegister:

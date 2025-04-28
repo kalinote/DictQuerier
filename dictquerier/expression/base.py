@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from jsonquerier.operator.enum import Operator
-from jsonquerier.operator.register import OperatorRegister
+from dictquerier.operator.enum import Operator
+from dictquerier.operator.register import OperatorRegister
 
 class BaseExpression(ABC):
     """

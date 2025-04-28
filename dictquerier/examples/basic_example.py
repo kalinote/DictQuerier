@@ -2,7 +2,7 @@
 基本使用示例
 """
 import json
-from jsonquerier import query_json, JsonPathError
+from dictquerier import query_json, JsonPathError
 
 def main():
     """主函数"""

@@ -1,4 +1,4 @@
-# JsonQuerier
+# dictquerier
 
 基于路径的Python字典或Json数据查询工具，支持复杂的路径表达式、条件筛选和数据提取。
 
@@ -20,7 +20,7 @@
 ## 安装
 
 ```bash
-pip install JsonQuerier
+pip install dictquerier
 ```
 
 ## 快速开始
@@ -28,7 +28,7 @@ pip install JsonQuerier
 ### Python API
 
 ```python
-from jsonquerier import query_json
+from dictquerier import query_json
 
 # 数据示例
 data = {
@@ -63,16 +63,16 @@ result7 = query_json(data, "users[0].scores[::2]")  # 返回: [80, 85]
 
 ```bash
 # 从文件查询
-jsonquerier -f data.json -p "users[*].name"
+dictquerier -f data.json -p "users[*].name"
 
 # 直接使用JSON字符串
-jsonquerier -i '{"users":[{"id":1,"name":"张三"}]}' -p "users[0].name"
+dictquerier -i '{"users":[{"id":1,"name":"张三"}]}' -p "users[0].name"
 
 # 保存结果到文件
-jsonquerier -f data.json -p "users['id'>1]" -o result.json
+dictquerier -f data.json -p "users['id'>1]" -o result.json
 
 # 使用紧凑输出格式
-jsonquerier -f data.json -p "users[*].name" -c
+dictquerier -f data.json -p "users[*].name" -c
 ```
 
 命令行参数：
@@ -97,7 +97,7 @@ jsonquerier -f data.json -p "users[*].name" -c
 可以使用正则表达式来匹配JSON对象中的键名：
 
 ```python
-from jsonquerier import query_json
+from dictquerier import query_json
 
 # 数据示例
 data = {
@@ -133,7 +133,7 @@ result3 = query_json(data, r"root.regex.^admin_\\d+$.permissions")
 ## 错误处理
 
 ```python
-from jsonquerier import query_json, JsonPathError
+from dictquerier import query_json, JsonPathError
 
 try:
     result = query_json(data, "不存在的路径")

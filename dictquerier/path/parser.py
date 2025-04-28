@@ -1,15 +1,15 @@
 import ast
 from typing import List, Union
 
-from jsonquerier.expression.base import BaseExpression
-from jsonquerier.expression.types.literal import LiteralExpression
-from jsonquerier.expression.parser.parser import ExpressionParser
+from dictquerier.expression.base import BaseExpression
+from dictquerier.expression.types.literal import LiteralExpression
+from dictquerier.expression.parser.parser import ExpressionParser
 
-from jsonquerier.path.node.base import BaseNode
-from jsonquerier.path.node.expression import ExpressionNode
-from jsonquerier.path.node.key import KeyNode
-from jsonquerier.path.node.wildcard import WildcardNode
-from jsonquerier.path.node.index import IndexNode
+from dictquerier.path.node.base import BaseNode
+from dictquerier.path.node.expression import ExpressionNode
+from dictquerier.path.node.key import KeyNode
+from dictquerier.path.node.wildcard import WildcardNode
+from dictquerier.path.node.index import IndexNode
 
 class PathParser:
     """

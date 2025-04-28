@@ -1,7 +1,6 @@
-
-from jsonquerier.operator.base import OperatorHandlerBase
-from jsonquerier.operator.enum import Operator
-from jsonquerier.operator.register import OperatorRegister
+from dictquerier.operator.base import OperatorHandlerBase
+from dictquerier.operator.enum import Operator, OperatorType
+from dictquerier.operator.register import OperatorRegister
 
 
 class CompareOperatorHandler(OperatorHandlerBase):
@@ -14,7 +13,18 @@ class CompareOperatorHandler(OperatorHandlerBase):
     
     @staticmethod
     def execute(expression, data) -> list:
-        return NotImplementedError("比较运算符暂不支持execute方法")
+        raise NotImplementedError("比较运算符暂不支持execute方法")
+    
+    @classmethod
+    def get_operator_type(cls):
+        """
+        获取运算符类型
+        """
+        return OperatorType.COMPARE
+    
+    @classmethod
+    def is_compare_operator(cls):
+        return True
 
 
 class EqualOperatorHandler(CompareOperatorHandler):

@@ -11,7 +11,7 @@ from .exceptions import JsonPathError
 
 def parse_args():
     """解析命令行参数"""
-    parser = argparse.ArgumentParser(description="JsonQuerier - 一个灵活的JSON路径查询工具")
+    parser = argparse.ArgumentParser(description="dictquerier - 一个灵活的JSON路径查询工具")
     parser.add_argument("-f", "--file", help="要查询的JSON文件路径")
     parser.add_argument("-p", "--path", required=True, help="查询路径表达式")
     parser.add_argument("-i", "--input", help="直接输入的JSON字符串，与-f互斥")

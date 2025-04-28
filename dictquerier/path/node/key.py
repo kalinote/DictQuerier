@@ -1,5 +1,5 @@
 from typing import Any
-from jsonquerier.path.node.base import BaseNode
+from dictquerier.path.node.base import BaseNode
 
 class KeyNode(BaseNode):
     """字典键

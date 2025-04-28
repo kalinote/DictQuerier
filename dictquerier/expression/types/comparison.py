@@ -1,6 +1,5 @@
-
-from jsonquerier.expression.base import BaseExpression
-from jsonquerier.operator.enum import Operator
+from dictquerier.expression.base import BaseExpression
+from dictquerier.operator.enum import Operator
 
 
 class ComparisonExpression(BaseExpression):
@@ -11,11 +10,11 @@ class ComparisonExpression(BaseExpression):
         super().__init__(key = key, value = value, operator = operator)
         
     def operate(self, data):
-        from jsonquerier.core import query_json
+        from dictquerier.core import query_json
         result_list = []
         for item in data:
             result = query_json(item, self.key, no_path_exception=True)
-            if self.handler.compare(result, self.value):
+            if self.handler.operate(left=result, right=self.value):
                 result_list.append(item)
         return result_list
 

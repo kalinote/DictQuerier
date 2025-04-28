@@ -1,6 +1,6 @@
 
-from jsonquerier.expression.base import BaseExpression
-from jsonquerier.operator.enum import Operator
+from dictquerier.expression.base import BaseExpression
+from dictquerier.operator.enum import Operator
 
 
 class SliceExpression(BaseExpression):

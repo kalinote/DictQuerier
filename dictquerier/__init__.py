@@ -1,5 +1,5 @@
 """
-JsonQuerier - 基于路径的Json数据查询工具
+dictquerier - 基于路径的Json数据查询工具
 
 这个包提供了类似于JSONPath的语法，用于从JSON数据中提取数据。
 """

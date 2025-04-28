@@ -4,7 +4,7 @@
 import re
 from typing import Any, Union, List, Dict
 
-from jsonquerier.expression.base import BaseExpression
+from dictquerier.expression.base import BaseExpression
 
 from .exceptions import JsonPathError
 from .operator.enum import Operator

@@ -3,12 +3,12 @@ import random
 import re
 import string
 
-from jsonquerier.expression.base import BaseExpression
-from jsonquerier.expression.types.comparison import ComparisonExpression
-from jsonquerier.expression.types.literal import LiteralExpression
-from jsonquerier.expression.types.logical import LogicalExpression
-from jsonquerier.expression.types.slice import SliceExpression
-from jsonquerier.operator.enum import Operator
+from dictquerier.expression.base import BaseExpression
+from dictquerier.expression.types.comparison import ComparisonExpression
+from dictquerier.expression.types.literal import LiteralExpression
+from dictquerier.expression.types.logical import LogicalExpression
+from dictquerier.expression.types.slice import SliceExpression
+from dictquerier.operator.enum import Operator
 
 class ExpressionParser:
     """
@@ -18,12 +18,25 @@ class ExpressionParser:
     @staticmethod
     def parse(expression: str) -> BaseExpression:
         expression = expression.strip()
+        
+        # 这个判断有问题，比如形如 '( "id"==2 && "name"=="value4" ) || ( "id"==2 && "sub_id" == "A" )' 这种表达式，处理后会变成 "id"==2 && "name"=="value4" ) || ( "id"==2 && "sub_id" == "A"
+        # if expression.startswith("(") and expression.endswith(")"):
+            # return ExpressionParser.parse(expression[1:-1])
         if expression.startswith("(") and expression.endswith(")"):
-            return ExpressionParser.parse(expression[1:-1])
+            depth = 0
+            for i, char in enumerate(expression):
+                if char == '(':
+                    depth += 1
+                elif char == ')':
+                    depth -= 1
+                if depth == 0 and i != len(expression) - 1:
+                    break
+            else:
+                return ExpressionParser.parse(expression[1:-1])
 
         # 处理逻辑表达式
         index, operator = ExpressionParser._find_outer_operator(expression)
-        if index != -1:
+        if index != -1 and operator != None:
             return LogicalExpression(
                 left=ExpressionParser.parse(expression[:index].strip()),
                 right=ExpressionParser.parse(expression[index+len(operator.value):].strip()),
@@ -44,8 +57,8 @@ class ExpressionParser:
         match = re.match(r'^(.+)\s*(==|!=|<=|>=|<|>)\s*(.+)$', expression)
         if match:
             key, operator_str, value = match.groups()
-            key = key.strip("'").strip('"')
-            value = value.strip("'").strip('"')
+            key = key.strip().strip("'").strip('"')
+            value = value.strip().strip("'").strip('"')
             if value.isdigit():
                 value = int(value)
             elif value.startswith('"') or value.startswith("'"):

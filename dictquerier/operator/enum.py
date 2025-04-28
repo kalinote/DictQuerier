@@ -20,3 +20,16 @@ class Operator(Enum):
 
     def __str__(self):
         return self.value 
+
+
+class OperatorType(Enum):
+    """
+    OperatorType 枚举类
+    用于定义操作符的类型，便于分派不同的处理方法。
+    """
+    COMPARE = "compare"
+    LOGICAL = "logical"
+    ARITHMETIC = "arithmetic"
+    
+    def __str__(self):
+        return self.value 

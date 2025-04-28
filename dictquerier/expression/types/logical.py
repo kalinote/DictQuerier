@@ -1,5 +1,5 @@
-from jsonquerier.expression.base import BaseExpression
-from jsonquerier.operator.enum import Operator
+from dictquerier.expression.base import BaseExpression
+from dictquerier.operator.enum import Operator
 
 
 class LogicalExpression(BaseExpression):
@@ -10,7 +10,7 @@ class LogicalExpression(BaseExpression):
         super().__init__(left=left, right=right, operator=operator)
 
     def operate(self, data):
-        return self.handler.execute(self, data)
+        return self.handler.operate(expression=self, data=data)
 
     def get_expression(self):
         return f"({self.left.get_expression()} {self.operator.value} {self.right.get_expression()})"

@@ -1,5 +1,5 @@
 
-from jsonquerier.expression.base import BaseExpression
+from dictquerier.expression.base import BaseExpression
 
 
 class LiteralExpression(BaseExpression):
