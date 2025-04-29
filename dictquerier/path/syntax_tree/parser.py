@@ -3,7 +3,7 @@ from dictquerier.path.tokenizer.token import Token
 from dictquerier.path.tokenizer.enum import TokenType
 from dictquerier.path.syntax_tree.node import (
     ASTNode, NameNode, NumberNode, StringNode, VarRefNode,
-    ScriptCallNode, BinaryOpNode, AttributeNode, IndexNode
+    ScriptCallNode, BinaryOpNode, AttributeNode, IndexNode, KeyNode
 )
 
 
@@ -128,27 +128,27 @@ class Parser:
         return left
 
     def path(self) -> ASTNode:
-        """解析路径表达式 (obj.attr 或 obj[index])"""
+        """解析路径表达式 (obj.key 或 obj[index])"""
         left = self.primary()
         
         while self.current_token:
             if self.current_token.type == TokenType.DOT:
-                # 属性访问: obj.attr
+                # 字典键访问: obj.key
                 self.advance()
                 
-                # 属性名可能是NAME或STRING
+                # 键名可能是NAME或STRING
                 if self.current_token.type == TokenType.NAME:
-                    attr_name = self.current_token.value
+                    key_name = self.current_token.value
                     line, column = self.current_token.line, self.current_token.column
                     self.advance()
-                    left = AttributeNode(left, attr_name, line, column)
+                    left = KeyNode(left, key_name, line, column)
                 elif self.current_token.type == TokenType.STRING:
-                    attr_name = self.parse_string_literal(self.current_token.value)
+                    key_name = self.parse_string_literal(self.current_token.value)
                     line, column = self.current_token.line, self.current_token.column
                     self.advance()
-                    left = AttributeNode(left, attr_name, line, column)
+                    left = KeyNode(left, key_name, line, column)
                 else:
-                    self.error(f"属性访问后期望标识符或字符串，但得到了 {self.current_token.type.literal}")
+                    self.error(f"键访问后期望标识符或字符串，但得到了 {self.current_token.type.literal}")
             
             elif self.current_token.type == TokenType.LBRACK:
                 # 索引访问: obj[index]
@@ -212,7 +212,7 @@ class Parser:
             return ScriptCallNode(name_node, args, line, column)
             
         elif token.type == TokenType.NAME:
-            # 标识符: name
+            # 标识符或键名: name
             name = token.value
             line, column = token.line, token.column
             self.advance()
@@ -269,3 +269,48 @@ class Parser:
                 i += 1
                 
         return result 
+
+    @staticmethod
+    def dump_ast(node, annotate_fields=True, indent=4, level=0):
+        """
+        将AST节点转换为字符串表示
+        
+        Args:
+            node: 要转换的AST节点
+            annotate_fields: 是否注释字段
+            indent: 缩进级别
+            level: 当前节点层级
+        """
+        def is_ast_node(obj):
+            return hasattr(obj, '__class__') and hasattr(obj, '__dict__') and isinstance(obj, ASTNode)
+
+        def format_node(node, level):
+            pad = ' ' * (indent * level) if indent else ''
+            next_pad = ' ' * (indent * (level + 1)) if indent else ''
+            cls_name = node.__class__.__name__
+            fields = [(k, v) for k, v in node.__dict__.items() if not k.startswith('_')]
+            if not fields:
+                return f"{cls_name}()"
+            lines = [f"{cls_name}("]
+            for i, (k, v) in enumerate(fields):
+                if isinstance(v, list):
+                    if not v:
+                        value_str = '[]'
+                    else:
+                        value_str = '[\n' + ',\n'.join(
+                            next_pad + format_node(item, level + 1) if is_ast_node(item) else next_pad + repr(item)
+                            for item in v
+                        ) + f'\n{pad}]'
+                elif is_ast_node(v):
+                    value_str = format_node(v, level + 1)
+                    if indent:
+                        value_str = f"\n{next_pad}" + value_str
+                else:
+                    value_str = repr(v)
+                if annotate_fields:
+                    lines.append(f"{next_pad}{k}={value_str}")
+                else:
+                    lines.append(f"{next_pad}{value_str}")
+            lines.append(f"{pad})")
+            return '\n'.join(lines)
+        return format_node(node, level) 
