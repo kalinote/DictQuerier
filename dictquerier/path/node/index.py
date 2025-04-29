@@ -10,3 +10,4 @@ class IndexNode(BaseNode):
     
     def get_path(self) -> str:
         return f"[{self.index}]"
+    
