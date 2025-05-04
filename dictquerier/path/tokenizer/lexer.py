@@ -15,10 +15,7 @@ class Lexer:
 
         # 基于 TokenType 构造 master_pattern，排除 END
         patterns = [f"(?P<{t.name}>{t.pattern})"
-                    for t in TokenType
-                    if t is not TokenType.END]
-        # 添加一个 UNKNOWN 捕获任意单字符，用于报错
-        patterns.append(r"(?P<UNKNOWN>.)")
+                    for t in TokenType]
         self.master_pattern = re.compile("|".join(patterns))
 
     def tokenize(self):

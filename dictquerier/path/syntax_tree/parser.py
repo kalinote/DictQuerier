@@ -35,7 +35,7 @@ class Parser:
         """抛出语法错误异常"""
         line = self.current_token.line if self.current_token else "未知"
         column = self.current_token.column if self.current_token else "未知"
-        raise SyntaxError(f"{message}，在行{line}列{column}")
+        raise SyntaxError(f"{message}，在行 {line} 列 {column}")
 
     def advance(self):
         """前进到下一个令牌"""
@@ -269,9 +269,8 @@ class Parser:
                 i += 1
                 
         return result 
-
     @staticmethod
-    def dump_ast(node, annotate_fields=True, indent=4, level=0):
+    def dump_ast(node, annotate_fields=True, indent=None, level=0):
         """
         将AST节点转换为字符串表示
         
@@ -291,26 +290,35 @@ class Parser:
             fields = [(k, v) for k, v in node.__dict__.items() if not k.startswith('_')]
             if not fields:
                 return f"{cls_name}()"
+            
+            # 根据indent决定分隔符
+            sep = '' if indent is None else '\n'
+            field_sep = ', ' if indent is None else ',\n'
+            
             lines = [f"{cls_name}("]
             for i, (k, v) in enumerate(fields):
                 if isinstance(v, list):
                     if not v:
                         value_str = '[]'
                     else:
-                        value_str = '[\n' + ',\n'.join(
-                            next_pad + format_node(item, level + 1) if is_ast_node(item) else next_pad + repr(item)
+                        list_sep = ', ' if indent is None else ',\n'
+                        list_pad = '' if indent is None else next_pad
+                        value_str = '[' + list_sep.join(
+                            list_pad + (format_node(item, level + 1) if is_ast_node(item) else repr(item))
                             for item in v
-                        ) + f'\n{pad}]'
+                        ) + ']'
+                        if indent is not None:
+                            value_str = '[\n' + value_str + f'\n{pad}]'
                 elif is_ast_node(v):
                     value_str = format_node(v, level + 1)
-                    if indent:
-                        value_str = f"\n{next_pad}" + value_str
                 else:
                     value_str = repr(v)
+                    
                 if annotate_fields:
                     lines.append(f"{next_pad}{k}={value_str}")
                 else:
                     lines.append(f"{next_pad}{value_str}")
+                    
             lines.append(f"{pad})")
-            return '\n'.join(lines)
-        return format_node(node, level) 
+            return sep.join(lines)
+        return format_node(node, level)
