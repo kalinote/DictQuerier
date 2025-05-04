@@ -1,4 +1,4 @@
-from dictquerier.path.tokenizer.enum import TokenType
+from dictquerier.tokenizer.enum import TokenType
 
 
 class Token:

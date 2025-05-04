@@ -1,6 +1,6 @@
 import re
-from dictquerier.path.tokenizer.token import Token
-from dictquerier.path.tokenizer.enum import TokenType
+from dictquerier.tokenizer.token import Token
+from dictquerier.tokenizer.enum import TokenType
 
 
 class Lexer:
@@ -8,7 +8,9 @@ class Lexer:
     词法分析器，将文本转换为 Token 序列
     """
     def __init__(self, text):
-        self.text = text
+        # 预处理：将 .[key] 转换为 .key
+        self.original_text = text
+        self.text = self._preprocess_text(text)
         self.pos = 0
         self.line = 1
         self.column = 0
@@ -18,7 +20,16 @@ class Lexer:
                     for t in TokenType]
         self.master_pattern = re.compile("|".join(patterns))
 
+    def _preprocess_text(self, text):
+        """预处理文本，转换特殊语法形式"""
+        return re.sub(r'\.(?=\[)', r'.*', text)
+
     def tokenize(self):
+        # 如果以点开头，在开头插入一个*通配符
+        if self.text.lstrip().startswith('.'):
+            # 创建一个人工的通配符Token
+            yield Token(TokenType.OP, '*', column=0, line=1)
+        
         for m in self.master_pattern.finditer(self.text):
             kind = m.lastgroup
             value = m.group(kind)

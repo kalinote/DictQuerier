@@ -1,9 +1,15 @@
 from typing import Union, List, Optional
+from dictquerier.tokenizer.enum import Operator
 
 class ASTNode:
     """
     抽象语法树基类
     """
+    def accept(self, visitor):
+        method_name = f'visit_{self.__class__.__name__}'
+        method = getattr(visitor, method_name, visitor.generic_visit)
+        return method(self)
+    
     def __init__(self, type_: str, line: Optional[int] = None, column: Optional[int] = None) -> None:
         self.type: str = type_
         self.line: Optional[int] = line
@@ -61,11 +67,20 @@ class BinaryOpNode(ASTNode):
     """
     二元运算符节点
     """
-    def __init__(self, left: ASTNode, op: str, right: ASTNode, line: Optional[int] = None, column: Optional[int] = None) -> None:
+    def __init__(self, left: ASTNode, op: Union[str, Operator], right: ASTNode, line: Optional[int] = None, column: Optional[int] = None) -> None:
         super().__init__(self.__class__.__name__, line, column)
         self.left: ASTNode = left
-        self.op: str = op
+        # 确保op是Operator枚举实例
+        self.op: Operator = op if isinstance(op, Operator) else self._str_to_operator(op)
         self.right: ASTNode = right
+    
+    @staticmethod
+    def _str_to_operator(op_str: str) -> Operator:
+        """将字符串转换为Operator枚举"""
+        for op in Operator:
+            if op.value == op_str:
+                return op
+        raise ValueError(f"不支持的操作符: {op_str}")
 
 
 class AttributeNode(ASTNode):
@@ -82,10 +97,11 @@ class KeyNode(ASTNode):
     """
     字典键访问节点
     """
-    def __init__(self, obj: ASTNode, key: str, line: Optional[int] = None, column: Optional[int] = None) -> None:
+    def __init__(self, obj: ASTNode, key: str, is_wildcard: bool = False, line: Optional[int] = None, column: Optional[int] = None) -> None:
         super().__init__(self.__class__.__name__, line, column)
         self.obj: ASTNode = obj
         self.key: str = key
+        self.is_wildcard: bool = is_wildcard
 
 class IndexNode(ASTNode):
     """
@@ -95,4 +111,3 @@ class IndexNode(ASTNode):
         super().__init__(self.__class__.__name__, line, column)
         self.obj: ASTNode = obj
         self.index: ASTNode = index
-

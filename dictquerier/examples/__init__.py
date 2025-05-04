@@ -1,3 +1,0 @@
-"""
-dictquerier示例包
-""" 

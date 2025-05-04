@@ -6,8 +6,8 @@ dictquerier - 基于路径的Json数据查询工具
 
 __version__ = "0.1.0"
 
-from .exceptions import JsonPathError
-from .operator.enum import Operator
+from .exceptions import PathError
+from .tokenizer.enum import Operator
 from .core import query_json, flatten_list
 
 from .script.manager import script_manager
@@ -15,7 +15,7 @@ from .script.manager import script_manager
 
 
 __all__ = [
-    'JsonPathError', 
+    'PathError', 
     'Operator', 
     'query_json', 
     'flatten_list',

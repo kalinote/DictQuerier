@@ -7,7 +7,7 @@ import sys
 from typing import Any, Dict, List
 
 from .core import query_json
-from .exceptions import JsonPathError
+from .exceptions import PathError
 
 def parse_args():
     """解析命令行参数"""
@@ -58,7 +58,7 @@ def main():
         else:
             print(json.dumps(result, ensure_ascii=False, indent=indent))
             
-    except JsonPathError as e:
+    except PathError as e:
         print(f"查询路径错误: {e}", file=sys.stderr)
         sys.exit(1)
     except SyntaxError as e:

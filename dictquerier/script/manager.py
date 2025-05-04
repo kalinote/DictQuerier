@@ -3,6 +3,7 @@ import functools
 class ScriptManager:
     def __init__(self):
         self.scripts = {}
+        self.variables = {}
 
     def register(
         self, 
@@ -20,5 +21,11 @@ class ScriptManager:
         if name not in self.scripts:
             raise ValueError(f"脚本 {name} 未注册")
         return self.scripts[name](*args, **kwargs)
+    
+    def define(self, var_name, var_value):
+        self.variables[var_name] = var_value
+        
+    def get(self, var_name):
+        return self.variables.get(var_name)
 
 script_manager = ScriptManager()

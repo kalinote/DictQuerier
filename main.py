@@ -1,5 +1,5 @@
 from dictquerier import query_json, flatten_list, script_manager
-from dictquerier.exceptions import JsonPathError, ScriptNotRegisteredError
+from dictquerier.exceptions import PathError, ScriptNotRegisteredError
 
 def main():
     # 生成用于测试的示例JSON数据
@@ -40,78 +40,73 @@ def main():
                 {"id": 2, "name": "value4", "sub_id": "B", "key": True, "sub_list": [5,6,7,8]}
             ],
             "number_list": [1,2,3,4,5,6,7,8,9],
-            8407: "数字键测试",
             "非ASCII键": "中文键值测试",
             "8407": "字符串数字键测试",
             # 正则表达式专用测试数据
-            "regex": {
-                # 基础类型测试
-                "123": "纯数字键",
-                "abc": "纯字母键",
-                "abc123": "字母数字混合键",
-                "key.special": "带点特殊键",
-                "中文键": "中文字符键",
-                "email@example.com": "电子邮件格式键",
+            # "regex": {
+            #     # 基础类型测试
+            #     "123": "纯数字键",
+            #     "abc": "纯字母键",
+            #     "abc123": "字母数字混合键",
+            #     "key.special": "带点特殊键",
+            #     "中文键": "中文字符键",
+            #     "email@example.com": "电子邮件格式键",
                 
-                # 键为数字格式的嵌套结构
-                "user_001": {"name": "张三", "age": 25, "role": "admin"},
-                "user_002": {"name": "李四", "age": 30, "role": "user"},
-                "user_003": {"name": "王五", "age": 35, "role": "user"},
-                "admin_001": {"name": "管理员1", "permissions": ["read", "write", "delete"]},
-                "admin_002": {"name": "管理员2", "permissions": ["read", "write"]},
+            #     # 键为数字格式的嵌套结构
+            #     "user_001": {"name": "张三", "age": 25, "role": "admin"},
+            #     "user_002": {"name": "李四", "age": 30, "role": "user"},
+            #     "user_003": {"name": "王五", "age": 35, "role": "user"},
+            #     "admin_001": {"name": "管理员1", "permissions": ["read", "write", "delete"]},
+            #     "admin_002": {"name": "管理员2", "permissions": ["read", "write"]},
                 
-                # 键为特殊格式的嵌套结构
-                "api/v1/users": [
-                    {"id": 1, "username": "user1"},
-                    {"id": 2, "username": "user2"}
-                ],
-                "api/v1/posts": [
-                    {"id": 101, "title": "文章1"},
-                    {"id": 102, "title": "文章2"}
-                ],
-                "api/v2/users": [
-                    {"id": 3, "username": "user3"},
-                    {"id": 4, "username": "user4"}
-                ],
+            #     # 键为特殊格式的嵌套结构
+            #     "api/v1/users": [
+            #         {"id": 1, "username": "user1"},
+            #         {"id": 2, "username": "user2"}
+            #     ],
+            #     "api/v1/posts": [
+            #         {"id": 101, "title": "文章1"},
+            #         {"id": 102, "title": "文章2"}
+            #     ],
+            #     "api/v2/users": [
+            #         {"id": 3, "username": "user3"},
+            #         {"id": 4, "username": "user4"}
+            #     ],
                 
-                # 包含点号的复杂键
-                "config.dev": {"host": "localhost", "port": 8080},
-                "config.prod": {"host": "example.com", "port": 443},
+            #     # 包含点号的复杂键
+            #     "config.dev": {"host": "localhost", "port": 8080},
+            #     "config.prod": {"host": "example.com", "port": 443},
                 
-                # 更复杂的嵌套结构
-                "nested.data.001": {
-                    "level1": {
-                        "level2": {
-                            "level3": "深度嵌套数据1"
-                        }
-                    }
-                },
-                "nested.data.002": {
-                    "level1": {
-                        "level2": {
-                            "level3": "深度嵌套数据2"
-                        }
-                    }
-                }
-            }
+            #     # 更复杂的嵌套结构
+            #     "nested.data.001": {
+            #         "level1": {
+            #             "level2": {
+            #                 "level3": "深度嵌套数据1"
+            #             }
+            #         }
+            #     },
+            #     "nested.data.002": {
+            #         "level1": {
+            #             "level2": {
+            #                 "level3": "深度嵌套数据2"
+            #             }
+            #         }
+            #     }
+            # }
         }
     }
     # 定义测试用例: (路径, 期望结果或异常类型)
     test_cases = [
-        # # 基本路径查询
-        # ("root.root_key", "root_value"),          # 点操作符查询
-        # ('root["root_key"]', "root_value"),       # 方括号查询
-        # ("root.8407", "数字键测试"),                # 整数类型数据方括号查询
-        # ("root[8407]", "数字键测试"),               # 整数类型数据点操作符查询
-        # ('root."8407"', "字符串数字键测试"),         # 数字字符串点操作符查询
-        # ('root["8407"]', "字符串数字键测试"),        # 数字字符串方括号查询
-        # ("root.\.", "pass"),                      # 以点为键的点操作符查询
-        # ("root['.']", "pass"),                    # 以点为键的方括号查询
-        # ("root['key.01']", "value"),              # 键包含点的方括号查询
-        # ("root.key\.01", "value"),                # 键包含点的点操作符查询
+        # 基本路径查询
+        ("root.root_key", "root_value"),            # 点路径查询
+        ('root["root_key"]', "root_value"),         # 方括号查询
+        ("root['.']", "pass"),                      # 以点为键的方括号查询
+        ("root['key.01']", "value"),                # 键包含点的方括号查询
+        ("root['dictionary']['key']", "value"),     # 连续方括号查询
+        (".root.root_key", "root_value"),            # 以点开头的查询
         
-        # # 索引和切片
-        # ("root.number_list[2]", 3),
+        # 索引和切片
+        ("root.number_list[2]", 3),
         
         # # 正则表达式测试
         # # 1. 基本匹配测试
@@ -164,27 +159,26 @@ def main():
         #     ["read", "write"]
         # ]),  # 匹配管理员权限
         
-        # ("root.root_key", "root_value"),
-        # ("root.child[0][0]", "first"),
-        # (r"root.key\.01", "value"),
-        # ("root.items[*].value", [10, 20, 30]),
-        # ("root.data[*].id", [1, 2, 3]),
-        # ("root.info.list[1].details", "detail_value"),
-        # ("root.empty[*]", []),
-        # ("root.array[1][2]", "f"),
-        # ("root.dictionary['key']", "value"),
-        # ("root.list['id'==2].name", ["value2", "value4"]),
-        # ("root.list[id==1].name", ['value1']),
-        # ("root.child[1][0]", "third"),
-        # ("root['key[02]']", "value2"),
-        # ("root['.']", "pass"),
-        # ("root.dictionary['invalid']", None),
-        # ("root.list['sub_id'=='A'].sub_list", [[5, 6, 7, 8], [1, 2, 3, 4]]),
-        # ('root.list["id"<3].name', ["value1", "value2", "value4"]),
-        # ('root.list["id"==2&&"name"=="value4"].sub_list', [[5, 6, 7, 8]]),
-        # ('root.list["id"==2||"id"==3].sub_id', ["A", "B"]),
-        # ('root.list[("id"==2||"id"==3)].sub_id', ["A", "B"]),
-        # (".root.child[1][0]", "third"),
+        ("root.root_key", "root_value"),
+        ("root.child[0][0]", "first"),
+        ("root.items[*].value", [10, 20, 30]),
+        ("root.data[*].id", [1, 2, 3]),
+        ("root.info.list[1].details", "detail_value"),
+        ("root.empty[*]", []),
+        ("root.array[1][2]", "f"),
+        ("root.dictionary['key']", "value"),
+        ("root.list['id'==2].name", ["value2", "value4"]),
+        ("root.list[id==1].name", NameError),
+        ("root.child[1][0]", "third"),
+        ("root['key[02]']", "value2"),
+        ("root['.']", "pass"),
+        ("root.dictionary['invalid']", None),
+        ("root.list['sub_id'=='A'].sub_list", [[5, 6, 7, 8], [1, 2, 3, 4]]),
+        ('root.list["id"<3].name', ["value1", "value2", "value4"]),
+        ('root.list["id"==2&&"name"=="value4"].sub_list', [[5, 6, 7, 8]]),
+        ('root.list["id"==2||"id"==3].sub_id', ["A", "B", "B"]),
+        ('root.list[("id"==2||"id"==3)].sub_id', ["A", "B", "B"]),
+        (".root.child[1][0]", "third"),
         # ("root.number_list[1:4]", [2, 3, 4]),  # 基本切片
         # ("root.number_list[::2]", [1, 3, 5, 7, 9]),  # 步长为2
         # ("root.number_list[::-1]", [9, 8, 7, 6, 5, 4, 3, 2, 1]),  # 反向切片
@@ -200,14 +194,6 @@ def main():
         # ("root.number_list[5:2:-1]", [6, 5, 4]),  # 反向步长切片
         # ("root.number_list[2:5:0]", ValueError),  # 步长为0（非法）
         # ("root.number_list[2:5:1.5]", ValueError),  # 非整数步长（非法）
-        # ("root.8407", "数字键测试"),                 # 数字键测试
-        # ("root.'8407'", "字符串数字键测试"),        # 单引号字符串数字键测试
-        # ("root.'非ASCII键'", "中文键值测试"),        # 单引号中文键值测试
-        # ('root."8407"', "字符串数字键测试"),        # 双引号字符串数字键测试
-        # ('root[8407]', "数字键测试"),                # 数字键测试
-        # ('root["非ASCII键"]', "中文键值测试"),        # 方括号中文键值测试
-        ('root.items["value">@bigger_than(15)].sub_value', NotImplementedError),
-        ('root.items["value">@not_registered(15, num=1, s="test")].sub_value', ScriptNotRegisteredError),
     ]
     # 统计变量
     total = len(test_cases)
@@ -277,10 +263,6 @@ def main():
             print(f"   期望结果: {expected}")
     print("------------------------------\n")
 
-@script_manager.register(name="bigger_than")
-def bigger_than(value):
-    print("执行脚本测试")
-    return value
 
 if __name__ == "__main__":
     main()

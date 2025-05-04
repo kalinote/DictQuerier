@@ -34,3 +34,24 @@ class TokenType(Enum):
     def pattern(self):
         return self._pattern
     
+class Operator(Enum):
+    """
+    Operator 枚举类
+    用于定义支持的操作符类型，便于后续表达式解析和判断。
+    """
+    EQUAL = "=="
+    NOT_EQUAL = "!="
+    LESS_THAN = "<"
+    GREATER_THAN = ">"
+    LESS_EQUAL = "<="
+    GREATER_EQUAL = ">="
+    LOGICAL_AND = "&&"
+    LOGICAL_OR = "||"
+    PLUS = "+"
+    MINUS = "-"
+    MULTIPLY = "*"
+    DIVIDE = "/"
+    SLICE = "slice"
+
+    def __str__(self):
+        return self.value 

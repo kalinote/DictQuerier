@@ -1,7 +1,7 @@
 from typing import List, Optional, Iterator
-from dictquerier.path.tokenizer.token import Token
-from dictquerier.path.tokenizer.enum import TokenType
-from dictquerier.path.syntax_tree.node import (
+from dictquerier.tokenizer.token import Token
+from dictquerier.tokenizer.enum import TokenType, Operator
+from dictquerier.syntax_tree.node import (
     ASTNode, NameNode, NumberNode, StringNode, VarRefNode,
     ScriptCallNode, BinaryOpNode, AttributeNode, IndexNode, KeyNode
 )
@@ -23,6 +23,7 @@ class Parser:
         if not self.tokens:
             raise SyntaxError("没有可解析的令牌")
         
+        # 常规解析
         result = self.expr()
         
         # 确保所有令牌都已解析（除了END）
@@ -76,8 +77,11 @@ class Parser:
         """解析逻辑表达式 (||, &&)"""
         left = self.comparison()
         
-        while self.current_token and self.current_token.type == TokenType.OP and self.current_token.value in ('||', '&&'):
-            op = self.current_token.value
+        while (self.current_token and self.current_token.type == TokenType.OP and 
+               self.current_token.value in (Operator.LOGICAL_OR.value, Operator.LOGICAL_AND.value)):
+            # 将操作符字符串转换为Operator枚举
+            op_value = self.current_token.value
+            op = Operator.LOGICAL_OR if op_value == Operator.LOGICAL_OR.value else Operator.LOGICAL_AND
             line, column = self.current_token.line, self.current_token.column
             self.advance()
             right = self.comparison()
@@ -90,8 +94,17 @@ class Parser:
         left = self.addition()
         
         while (self.current_token and self.current_token.type == TokenType.OP and 
-               self.current_token.value in ('>', '<', '>=', '<=', '==', '!=')):
-            op = self.current_token.value
+               self.current_token.value in (
+                   Operator.GREATER_THAN.value, 
+                   Operator.LESS_THAN.value, 
+                   Operator.GREATER_EQUAL.value, 
+                   Operator.LESS_EQUAL.value, 
+                   Operator.EQUAL.value, 
+                   Operator.NOT_EQUAL.value
+               )):
+            # 将操作符字符串转换为Operator枚举
+            op_value = self.current_token.value
+            op = next(op for op in Operator if op.value == op_value)
             line, column = self.current_token.line, self.current_token.column
             self.advance()
             right = self.addition()
@@ -104,8 +117,10 @@ class Parser:
         left = self.multiplication()
         
         while (self.current_token and self.current_token.type == TokenType.OP and 
-               self.current_token.value in ('+', '-')):
-            op = self.current_token.value
+               self.current_token.value in (Operator.PLUS.value, Operator.MINUS.value)):
+            # 将操作符字符串转换为Operator枚举
+            op_value = self.current_token.value
+            op = Operator.PLUS if op_value == Operator.PLUS.value else Operator.MINUS
             line, column = self.current_token.line, self.current_token.column
             self.advance()
             right = self.multiplication()
@@ -118,8 +133,10 @@ class Parser:
         left = self.path()
         
         while (self.current_token and self.current_token.type == TokenType.OP and 
-               self.current_token.value in ('*', '/')):
-            op = self.current_token.value
+               self.current_token.value in (Operator.MULTIPLY.value, Operator.DIVIDE.value)):
+            # 将操作符字符串转换为Operator枚举
+            op_value = self.current_token.value
+            op = Operator.MULTIPLY if op_value == Operator.MULTIPLY.value else Operator.DIVIDE
             line, column = self.current_token.line, self.current_token.column
             self.advance()
             right = self.path()
@@ -136,17 +153,22 @@ class Parser:
                 # 字典键访问: obj.key
                 self.advance()
                 
+                # 检查通配符 obj.*
+                if self.current_token and self.current_token.type == TokenType.OP and self.current_token.value == '*':
+                    line, column = self.current_token.line, self.current_token.column
+                    self.advance()
+                    left = KeyNode(left, '*', is_wildcard=True, line=line, column=column)
                 # 键名可能是NAME或STRING
-                if self.current_token.type == TokenType.NAME:
+                elif self.current_token.type == TokenType.NAME:
                     key_name = self.current_token.value
                     line, column = self.current_token.line, self.current_token.column
                     self.advance()
-                    left = KeyNode(left, key_name, line, column)
+                    left = KeyNode(left, key_name, line=line, column=column)
                 elif self.current_token.type == TokenType.STRING:
                     key_name = self.parse_string_literal(self.current_token.value)
                     line, column = self.current_token.line, self.current_token.column
                     self.advance()
-                    left = KeyNode(left, key_name, line, column)
+                    left = KeyNode(left, key_name, line=line, column=column)
                 else:
                     self.error(f"键访问后期望标识符或字符串，但得到了 {self.current_token.type.literal}")
             
@@ -155,10 +177,19 @@ class Parser:
                 line, column = self.current_token.line, self.current_token.column
                 self.advance()
                 
-                index_expr = self.expr()  # 索引可以是任意表达式
-                
-                self.expect(TokenType.RBRACK)
-                left = IndexNode(left, index_expr, line, column)
+                # 检查是否是通配符索引 obj[*]
+                if self.current_token and self.current_token.type == TokenType.OP and self.current_token.value == '*':
+                    wildcard_token = self.current_token
+                    self.advance()
+                    # 确保通配符后面是右括号
+                    self.expect(TokenType.RBRACK)
+                    # 创建一个特殊的StringNode表示通配符
+                    wildcard_node = StringNode('*', wildcard_token.line, wildcard_token.column)
+                    left = IndexNode(left, wildcard_node, line, column)
+                else:
+                    index_expr = self.expr()  # 索引可以是任意表达式
+                    self.expect(TokenType.RBRACK)
+                    left = IndexNode(left, index_expr, line, column)
             
             else:
                 # 不是路径访问操作，跳出循环
@@ -172,6 +203,17 @@ class Parser:
             self.error("意外结束，期望表达式")
         
         token = self.current_token
+        
+        # 检查是否是单独的通配符(*)
+        if token.type == TokenType.OP and token.value == '*':
+            line, column = token.line, token.column
+            self.advance()
+            # 创建一个特殊的通配符节点
+            # 这里使用一个空的名字，不依赖于特定键名
+            root_node = NameNode('', line=line, column=column)
+            # 添加一个标记，表示这是根级别的通配符
+            root_node._is_root_wildcard = True
+            return KeyNode(root_node, '*', is_wildcard=True, line=line, column=column)
         
         if token.type == TokenType.VARSIGN:
             # 变量引用: $name
