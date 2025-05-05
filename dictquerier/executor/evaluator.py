@@ -1,8 +1,8 @@
 from dictquerier.executor.visitor import ASTVisitor
 from dictquerier.script.manager import script_manager
 from dictquerier.tokenizer.enum import Operator
-from dictquerier.syntax_tree.node import BinaryOpNode, StringNode
-from dictquerier.exceptions import PathError
+from dictquerier.syntax_tree.node import *
+from dictquerier.exceptions import UnknownOperator
 
 class Evaluator(ASTVisitor):
     """
@@ -12,14 +12,14 @@ class Evaluator(ASTVisitor):
         self.data = data
         self.context = {}
 
-    def query(self, ast_root):
+    def query(self, ast_root: ASTNode):
         """查询入口方法"""
         # 标记当前是根查询
         self.context['is_root_query'] = True
         result = self.visit(ast_root)
         return result
 
-    def visit_NameNode(self, node):
+    def visit_NameNode(self, node: NameNode):
         # 如果是根查询，从self.data中获取对应键的值
         if self.context.get('is_root_query', False):
             name = node.name
@@ -41,10 +41,10 @@ class Evaluator(ASTVisitor):
         # 非根查询，直接返回节点名称
         return node.name
         
-    def visit_NumberNode(self, node):
+    def visit_NumberNode(self, node: NumberNode):
         return node.value
         
-    def visit_StringNode(self, node):
+    def visit_StringNode(self, node: StringNode):
         """
         访问字符串节点
         当在条件过滤上下文中时，尝试从当前项中获取对应键的值
@@ -61,10 +61,10 @@ class Evaluator(ASTVisitor):
         # 普通字符串
         return value
 
-    def visit_VarRefNode(self, node):
+    def visit_VarRefNode(self, node: VarRefNode):
         return script_manager.get(self.visit(node.name))
 
-    def visit_ScriptCallNode(self, node):
+    def visit_ScriptCallNode(self, node: ScriptCallNode):
         func_name = self.visit(node.name)
         if not script_manager.check_script(func_name):
             raise ValueError(f"未定义的函数: {func_name}")
@@ -75,7 +75,7 @@ class Evaluator(ASTVisitor):
         # 调用函数
         return script_manager.run(func_name, *args)
 
-    def visit_BinaryOpNode(self, node):
+    def visit_BinaryOpNode(self, node: BinaryOpNode):
         """
         处理二元操作符节点
         支持:
@@ -130,9 +130,9 @@ class Evaluator(ASTVisitor):
         
         # 不支持的操作符
         else:
-            raise ValueError(f"不支持的操作符: {node.op}")
+            raise UnknownOperator(f"不支持的操作符: {node.op}")
 
-    def visit_KeyNode(self, node):
+    def visit_KeyNode(self, node: KeyNode):
         obj = self.visit(node.obj)
         key = node.key
         
@@ -171,11 +171,7 @@ class Evaluator(ASTVisitor):
             
         return None
     
-    def visit_IndexNode(self, node):
-        """
-        访问索引节点，支持条件过滤和通配符
-        例如: item["price" > 10] 或 item[*] 或 item["key"]
-        """
+    def visit_IndexNode(self, node: IndexNode):
         obj = self.visit(node.obj)
         
         if obj is None:
@@ -250,4 +246,27 @@ class Evaluator(ASTVisitor):
             return obj.get(index)
         
         return None
+    
+    def visit_SliceNode(self, node: SliceNode):
+        obj = self.visit(node.obj)
+        
+        if obj is None:
+            return None
+        
+        # 检查切片值是否合法
+        start = self.visit(node.start) if node.start else None
+        end = self.visit(node.end) if node.end else None
+        step = self.visit(node.step) if node.step else None
+        
+        if start and not isinstance(start, int):
+            raise ValueError("切片起始值必须为整数")
+        if end and not isinstance(end, int):
+            raise ValueError("切片结束值必须为整数")
+        if step and not isinstance(step, int):
+            raise ValueError("切片步长必须为整数")
+        if step == 0:
+            raise ValueError("切片步长不能为0")
+        
+        # 暂定，后续可能增加一些特殊切片处理，比如numpy中的多维切片
+        return obj[start:end:step]
     

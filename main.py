@@ -179,21 +179,21 @@ def main():
         ('root.list["id"==2||"id"==3].sub_id', ["A", "B", "B"]),
         ('root.list[("id"==2||"id"==3)].sub_id', ["A", "B", "B"]),
         (".root.child[1][0]", "third"),
-        # ("root.number_list[1:4]", [2, 3, 4]),  # 基本切片
-        # ("root.number_list[::2]", [1, 3, 5, 7, 9]),  # 步长为2
-        # ("root.number_list[::-1]", [9, 8, 7, 6, 5, 4, 3, 2, 1]),  # 反向切片
-        # ("root.number_list[-3:]", [7, 8, 9]),  # 负数索引
-        # ("root.number_list[:3]", [1, 2, 3]),  # 省略start
-        # ("root.number_list[3:]", [4, 5, 6, 7, 8, 9]),  # 省略end
-        # ("root.number_list[1:6:2]", [2, 4, 6]),  # 完整切片语法
-        # ("root.list[1:3].name", ["value2", "value3"]),  # 在对象列表上切片
-        # ("root.array[0][1:3]", ["b", "c"]),  # 在嵌套列表上切片
-        # ("root.empty[1:3]", []),  # 在空列表上切片
-        # ("root.number_list[10:20]", []),  # 超出范围的切片
-        # ("root.number_list[-10:-5]", [1, 2, 3, 4]),  # 修正期望值
-        # ("root.number_list[5:2:-1]", [6, 5, 4]),  # 反向步长切片
-        # ("root.number_list[2:5:0]", ValueError),  # 步长为0（非法）
-        # ("root.number_list[2:5:1.5]", ValueError),  # 非整数步长（非法）
+        ("root.number_list[1:4]", [2, 3, 4]),  # 基本切片
+        ("root.number_list[::2]", [1, 3, 5, 7, 9]),  # 步长为2
+        ("root.number_list[::-1]", [9, 8, 7, 6, 5, 4, 3, 2, 1]),  # 反向切片
+        ("root.number_list[-3:]", [7, 8, 9]),  # 负数索引
+        ("root.number_list[:3]", [1, 2, 3]),  # 省略start
+        ("root.number_list[3:]", [4, 5, 6, 7, 8, 9]),  # 省略end
+        ("root.number_list[1:6:2]", [2, 4, 6]),  # 完整切片语法
+        ("root.list[1:3].name", ["value2", "value3"]),  # 在对象列表上切片
+        ("root.array[0][1:3]", ["b", "c"]),  # 在嵌套列表上切片
+        ("root.empty[1:3]", []),  # 在空列表上切片
+        ("root.number_list[10:20]", []),  # 超出范围的切片
+        ("root.number_list[-10:-5]", [1, 2, 3, 4]),  # 修正期望值
+        ("root.number_list[5:2:-1]", [6, 5, 4]),  # 反向步长切片
+        ("root.number_list[2:5:0]", ValueError),  # 步长为0（非法）
+        ("root.number_list[2:5:1.5]", ValueError),  # 非整数步长（非法）
     ]
     # 统计变量
     total = len(test_cases)
