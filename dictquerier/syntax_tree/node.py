@@ -32,6 +32,7 @@ class NumberNode(ASTNode):
     """
     def __init__(self, value: str, line: Optional[int] = None, column: Optional[int] = None) -> None:
         super().__init__(self.__class__.__name__, line, column)
+        # 处理带负号的数字字符串
         self.value: Union[int, float] = float(value) if '.' in value or 'e' in value.lower() else int(value)
         
 class StringNode(ASTNode):
@@ -111,3 +112,14 @@ class IndexNode(ASTNode):
         super().__init__(self.__class__.__name__, line, column)
         self.obj: ASTNode = obj
         self.index: ASTNode = index
+
+class SliceNode(ASTNode):
+    """
+    基础切片节点
+    """
+    def __init__(self, obj: ASTNode, start: ASTNode, end: ASTNode, step: ASTNode, line: Optional[int] = None, column: Optional[int] = None) -> None:
+        super().__init__(self.__class__.__name__, line, column)
+        self.obj: ASTNode = obj
+        self.start: ASTNode = start
+        self.end: ASTNode = end
+        self.step: ASTNode = step

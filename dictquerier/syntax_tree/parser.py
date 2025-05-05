@@ -3,7 +3,7 @@ from dictquerier.tokenizer.token import Token
 from dictquerier.tokenizer.enum import TokenType, Operator
 from dictquerier.syntax_tree.node import (
     ASTNode, NameNode, NumberNode, StringNode, VarRefNode,
-    ScriptCallNode, BinaryOpNode, AttributeNode, IndexNode, KeyNode
+    ScriptCallNode, BinaryOpNode, AttributeNode, IndexNode, KeyNode, SliceNode
 )
 
 
@@ -148,6 +148,33 @@ class Parser:
         """解析路径表达式 (obj.key 或 obj[index])"""
         left = self.primary()
         
+        def _parse_slice_parts() -> tuple:
+            """
+            解析切片的end和step部分
+            
+            返回:
+                tuple: (end, step) - 切片的end和step部分
+            """
+            # 检查是否是第二个冒号，如 [start::step] 或 [::step]
+            if self.current_token and self.current_token.type == TokenType.COLON:
+                # 是 [start::step] 或 [::step] 形式，end为None
+                end = None
+                self.advance()  # 跳过第二个冒号
+                # 解析step，如果有的话
+                step = self.expr() if self.current_token and self.current_token.type != TokenType.RBRACK else None
+            else:
+                # 是 [start:end] 或 [:end] 形式
+                end = self.expr() if self.current_token and self.current_token.type != TokenType.RBRACK else None
+                
+                # 检查是否有第二个冒号，如 [start:end:step] 或 [:end:step]
+                if self.current_token and self.current_token.type == TokenType.COLON:
+                    self.advance()  # 跳过第二个冒号
+                    step = self.expr() if self.current_token and self.current_token.type != TokenType.RBRACK else None
+                else:
+                    step = None
+            
+            return end, step
+        
         while self.current_token:
             if self.current_token.type == TokenType.DOT:
                 # 字典键访问: obj.key
@@ -187,9 +214,30 @@ class Parser:
                     wildcard_node = StringNode('*', wildcard_token.line, wildcard_token.column)
                     left = IndexNode(left, wildcard_node, line, column)
                 else:
-                    index_expr = self.expr()  # 索引可以是任意表达式
-                    self.expect(TokenType.RBRACK)
-                    left = IndexNode(left, index_expr, line, column)
+                    # 检查是否是切片 obj[start:end:step]
+                    if self.current_token and self.current_token.type == TokenType.COLON:
+                        # 是 [:end:step] 形式，start为None
+                        start = None
+                        self.advance()  # 跳过第一个冒号
+                        end, step = _parse_slice_parts()
+                        self.expect(TokenType.RBRACK)
+                        left = SliceNode(left, start, end, step, line, column)
+                    else:
+                        # 先解析第一个表达式
+                        index_expr = self.expr()
+                        
+                        # 检查是否有冒号，表示这是切片的开始
+                        if self.current_token and self.current_token.type == TokenType.COLON:
+                            # 是 [start:end:step] 形式
+                            start = index_expr
+                            self.advance()  # 跳过冒号
+                            end, step = _parse_slice_parts()
+                            self.expect(TokenType.RBRACK)
+                            left = SliceNode(left, start, end, step, line, column)
+                        else:
+                            # 普通索引访问 obj[index]
+                            self.expect(TokenType.RBRACK)
+                            left = IndexNode(left, index_expr, line, column)
             
             else:
                 # 不是路径访问操作，跳出循环
@@ -214,6 +262,22 @@ class Parser:
             # 添加一个标记，表示这是根级别的通配符
             root_node._is_root_wildcard = True
             return KeyNode(root_node, '*', is_wildcard=True, line=line, column=column)
+        
+        # 检查负号开头的负数
+        if token.type == TokenType.OP and token.value == '-':
+            line, column = token.line, token.column
+            self.advance()
+            
+            # 确保负号后面跟着数字
+            if self.current_token and self.current_token.type == TokenType.NUMBER:
+                number_token = self.current_token
+                value = "-" + number_token.value
+                self.advance()
+                return NumberNode(value, line, column)
+            else:
+                # 如果不是负数，回退到上一个token（负号），让正常的二元操作处理
+                self.current -= 1
+                self.current_token = token
         
         if token.type == TokenType.VARSIGN:
             # 变量引用: $name
@@ -265,6 +329,7 @@ class Parser:
             value = token.value
             line, column = token.line, token.column
             self.advance()
+            
             return NumberNode(value, line, column)
             
         elif token.type == TokenType.STRING:
@@ -311,6 +376,7 @@ class Parser:
                 i += 1
                 
         return result 
+    
     @staticmethod
     def dump_ast(node, annotate_fields=True, indent=None, level=0):
         """
