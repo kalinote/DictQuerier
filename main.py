@@ -38,62 +38,10 @@ def main():
                 {"id": 3, "name": "value3", "sub_id": "B", "sub_list": [9,10,11,12]},
                 {"id": 2, "name": "value4", "sub_id": "B", "key": True, "sub_list": [5,6,7,8]}
             ],
-            "number_list": [1,2,3,4,5,6,7,8,9],
-            "非ASCII键": "中文键值测试",
-            "8407": "字符串数字键测试",
-            # 正则表达式专用测试数据
-            # "regex": {
-            #     # 基础类型测试
-            #     "123": "纯数字键",
-            #     "abc": "纯字母键",
-            #     "abc123": "字母数字混合键",
-            #     "key.special": "带点特殊键",
-            #     "中文键": "中文字符键",
-            #     "email@example.com": "电子邮件格式键",
-                
-            #     # 键为数字格式的嵌套结构
-            #     "user_001": {"name": "张三", "age": 25, "role": "admin"},
-            #     "user_002": {"name": "李四", "age": 30, "role": "user"},
-            #     "user_003": {"name": "王五", "age": 35, "role": "user"},
-            #     "admin_001": {"name": "管理员1", "permissions": ["read", "write", "delete"]},
-            #     "admin_002": {"name": "管理员2", "permissions": ["read", "write"]},
-                
-            #     # 键为特殊格式的嵌套结构
-            #     "api/v1/users": [
-            #         {"id": 1, "username": "user1"},
-            #         {"id": 2, "username": "user2"}
-            #     ],
-            #     "api/v1/posts": [
-            #         {"id": 101, "title": "文章1"},
-            #         {"id": 102, "title": "文章2"}
-            #     ],
-            #     "api/v2/users": [
-            #         {"id": 3, "username": "user3"},
-            #         {"id": 4, "username": "user4"}
-            #     ],
-                
-            #     # 包含点号的复杂键
-            #     "config.dev": {"host": "localhost", "port": 8080},
-            #     "config.prod": {"host": "example.com", "port": 443},
-                
-            #     # 更复杂的嵌套结构
-            #     "nested.data.001": {
-            #         "level1": {
-            #             "level2": {
-            #                 "level3": "深度嵌套数据1"
-            #             }
-            #         }
-            #     },
-            #     "nested.data.002": {
-            #         "level1": {
-            #             "level2": {
-            #                 "level3": "深度嵌套数据2"
-            #             }
-            #         }
-            #     }
-            # }
+            "number_list": [1,2,3,4,5,6,7,8,9]
         }
     }
+    
     # 定义测试用例: (路径, 期望结果或异常类型)
     test_cases = [
         # 基本路径查询
@@ -101,62 +49,12 @@ def main():
         ('root["root_key"]', "root_value"),         # 方括号查询
         ("root['.']", "pass"),                      # 以点为键的方括号查询
         ("root['key.01']", "value"),                # 键包含点的方括号查询
+        ("root['key[02]']", "value2"),              # 其他特殊字符的方括号查询
         ("root['dictionary']['key']", "value"),     # 连续方括号查询
         (".root.root_key", "root_value"),            # 以点开头的查询
         
         # 索引和切片
         ("root.number_list[2]", 3),
-        
-        # # 正则表达式测试
-        # # 1. 基本匹配测试
-        # (r"root.regex['^[0-9]+$']", ["纯数字键"]),  # 完全匹配纯数字键
-        # (r"root.regex['^[a-z]+$']", ["纯字母键"]),  # 完全匹配纯字母键
-        
-        # # 2. 嵌套结构匹配 - 返回对象
-        # (r"root.regex['^user_\\d+$']", [
-        #     {"name": "张三", "age": 25, "role": "admin"},
-        #     {"name": "李四", "age": 30, "role": "user"},
-        #     {"name": "王五", "age": 35, "role": "user"}
-        # ]),  # 匹配所有用户对象
-        
-        # # 3. 嵌套结构匹配 - 返回数组
-        # (r"root.regex['^api/v1/']", [
-        #     [{"id": 1, "username": "user1"}, {"id": 2, "username": "user2"}],
-        #     [{"id": 101, "title": "文章1"}, {"id": 102, "title": "文章2"}]
-        # ]),  # 匹配所有v1 API数据
-        
-        # # 4. 带点号的键匹配
-        # (r"root.regex['^config\\.']", [
-        #     {"host": "localhost", "port": 8080},
-        #     {"host": "example.com", "port": 443}
-        # ]),  # 匹配所有配置数据
-        
-        # # 5. 复杂嵌套结构匹配
-        # (r"root.regex['^nested\\.data']", [
-        #     {
-        #         "level1": {
-        #             "level2": {
-        #                 "level3": "深度嵌套数据1"
-        #             }
-        #         }
-        #     },
-        #     {
-        #         "level1": {
-        #             "level2": {
-        #                 "level3": "深度嵌套数据2"
-        #             }
-        #         }
-        #     }
-        # ]),  # 匹配所有深度嵌套数据
-        
-        # # 6. 多层嵌套正则匹配后继续查询
-        # (r"root.regex['^user_\\d+$'].name", ["张三", "李四", "王五"]),  # 匹配用户后获取名称
-        
-        # # 7. 复杂正则表达式
-        # (r"root.regex.^admin_\\d+$.permissions", [
-        #     ["read", "write", "delete"],
-        #     ["read", "write"]
-        # ]),  # 匹配管理员权限
         
         ("root.root_key", "root_value"),
         ("root.child[0][0]", "first"),

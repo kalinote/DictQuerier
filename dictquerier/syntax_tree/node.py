@@ -53,13 +53,13 @@ class VarRefNode(ASTNode):
         super().__init__(self.__class__.__name__, line, column)
         self.name: NameNode = name
 
-
 class ScriptCallNode(ASTNode):
     """
     脚本调用节点
     """
-    def __init__(self, name: NameNode, args: List[ASTNode], kwargs: Dict[str, ASTNode], line: Optional[int] = None, column: Optional[int] = None) -> None:
+    def __init__(self, module: NameNode, name: NameNode, args: List[ASTNode], kwargs: Dict[str, ASTNode], line: Optional[int] = None, column: Optional[int] = None) -> None:
         super().__init__(self.__class__.__name__, line, column)
+        self.module: List[NameNode] = module
         self.name: NameNode = name
         self.args: List[ASTNode] = args
         self.kwargs: Dict[str, ASTNode] = kwargs
@@ -83,17 +83,6 @@ class BinaryOpNode(ASTNode):
             if op.value == op_str:
                 return op
         raise ValueError(f"不支持的操作符: {op_str}")
-
-
-class AttributeNode(ASTNode):
-    """
-    属性节点
-    """
-    def __init__(self, obj: ASTNode, attr: str, line: Optional[int] = None, column: Optional[int] = None) -> None:
-        super().__init__(self.__class__.__name__, line, column)
-        self.obj: ASTNode = obj
-        self.attr: str = attr
-
 
 class KeyNode(ASTNode):
     """

@@ -68,15 +68,18 @@ class Evaluator(ASTVisitor):
         # 函数操作时取消根查询标记
         self.context['is_root_query'] = False
         func_name = self.visit(node.name)
-        if not script_manager.check_script(func_name):
+        module_path = ".".join([self.visit(module) for module in node.module])
+        
+        if not script_manager.check_script(name=func_name, path=module_path):
             raise ValueError(f"未定义的函数: {func_name}, 确保函数在运行前已注册")
+            
             
         # 求值所有参数
         args = [self.visit(arg) for arg in node.args]
         kwargs = {self.visit(key): self.visit(value) for key, value in node.kwargs.items()}
 
         # 调用函数
-        return script_manager.run(func_name, *args, **kwargs)
+        return script_manager.run(name=func_name, path=module_path, args=args, kwargs=kwargs)
 
     def visit_BinaryOpNode(self, node: BinaryOpNode):
         """

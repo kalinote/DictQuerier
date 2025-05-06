@@ -3,7 +3,7 @@ from dictquerier.tokenizer.token import Token
 from dictquerier.tokenizer.enum import TokenType, Operator
 from dictquerier.syntax_tree.node import (
     ASTNode, NameNode, NumberNode, StringNode, VarRefNode,
-    ScriptCallNode, BinaryOpNode, AttributeNode, IndexNode, KeyNode, SliceNode
+    ScriptCallNode, BinaryOpNode, IndexNode, KeyNode, SliceNode
 )
 
 
@@ -38,9 +38,9 @@ class Parser:
         column = self.current_token.column if self.current_token else "未知"
         raise SyntaxError(f"{message}，在行 {line} 列 {column}")
 
-    def advance(self):
+    def advance(self, offset: int = 1):
         """前进到下一个令牌"""
-        self.current += 1
+        self.current += offset
         if self.current < len(self.tokens):
             self.current_token = self.tokens[self.current]
         else:
@@ -279,20 +279,37 @@ class Parser:
                 self.current -= 1
                 self.current_token = token
         
+        # 变量引用: $name
         if token.type == TokenType.VARSIGN:
-            # 变量引用: $name
             line, column = token.line, token.column
             self.advance()
             name_token = self.expect(TokenType.NAME)
             name_node = NameNode(name_token.value, name_token.line, name_token.column)
             return VarRefNode(name_node, line, column)
             
+        # 脚本调用: @func(args)
         elif token.type == TokenType.SCRIPTSIGN:
-            # 脚本调用: @func(args)
             line, column = token.line, token.column
             self.advance()
-            name_token = self.expect(TokenType.NAME)
-            name_node = NameNode(name_token.value, name_token.line, name_token.column)
+
+            module_node = []
+            name_node = None
+            
+            # 判断是否是"模块.函数"的形式
+            while not (self.current_token and self.current_token.type == TokenType.LPAREN):
+                next_token = self.peek()
+                if next_token and next_token.type == TokenType.DOT:
+                    module_node.append(NameNode(self.current_token.value, self.current_token.line, self.current_token.column))
+                    # 前进两步，跳过"."
+                    self.advance(2)
+                else:
+                    # 路径最后一级走此分支
+                    name_node = NameNode(self.current_token.value, self.current_token.line, self.current_token.column)
+                    self.advance()
+                    break
+            
+            if name_node is None:
+                self.error(f"脚本解析失败: 未找到函数名")
             
             # 解析参数列表
             args = []
@@ -331,7 +348,7 @@ class Parser:
                     
                 self.advance() # 跳过右括号
             
-            return ScriptCallNode(name_node, args, kwargs, line, column)
+            return ScriptCallNode(module_node, name_node, args, kwargs, line, column)
             
         elif token.type == TokenType.NAME:
             # 标识符或键名: name
