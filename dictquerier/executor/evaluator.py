@@ -65,18 +65,18 @@ class Evaluator(ASTVisitor):
         return script_manager.get(self.visit(node.name))
 
     def visit_ScriptCallNode(self, node: ScriptCallNode):
-        # 直接获取函数名，不经过visit
-        if not isinstance(node.name, NameNode):
-            raise ValueError(f"意外的函数名节点类型: {node.name}, 期望: NameNode")
-        func_name = node.name.name
+        # 函数操作时取消根查询标记
+        self.context['is_root_query'] = False
+        func_name = self.visit(node.name)
         if not script_manager.check_script(func_name):
             raise ValueError(f"未定义的函数: {func_name}, 确保函数在运行前已注册")
             
         # 求值所有参数
         args = [self.visit(arg) for arg in node.args]
-        
+        kwargs = {self.visit(key): self.visit(value) for key, value in node.kwargs.items()}
+
         # 调用函数
-        return script_manager.run(func_name, *args)
+        return script_manager.run(func_name, *args, **kwargs)
 
     def visit_BinaryOpNode(self, node: BinaryOpNode):
         """

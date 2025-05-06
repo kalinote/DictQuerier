@@ -12,8 +12,8 @@ class ExpressionParsingError(Exception):
     def __init__(self, message: str):
         super().__init__(message) 
 
-class ScriptNotRegisteredError(Exception):
-    """脚本未注册错误"""
+class UnknowScript(Exception):
+    """未知的脚本"""
     def __init__(self, message: str):
         super().__init__(message) 
         

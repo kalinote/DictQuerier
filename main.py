@@ -1,5 +1,4 @@
 from dictquerier import query_json, flatten_list, script_manager
-from dictquerier.exceptions import PathError, ScriptNotRegisteredError
 
 def main():
     # 生成用于测试的示例JSON数据
