@@ -1,4 +1,4 @@
-from typing import Union, List, Optional
+from typing import Dict, Union, List, Optional
 from dictquerier.tokenizer.enum import Operator
 
 class ASTNode:
@@ -58,10 +58,11 @@ class ScriptCallNode(ASTNode):
     """
     脚本调用节点
     """
-    def __init__(self, name: NameNode, args: List[ASTNode], line: Optional[int] = None, column: Optional[int] = None) -> None:
+    def __init__(self, name: NameNode, args: List[ASTNode], kwargs: Dict[str, ASTNode], line: Optional[int] = None, column: Optional[int] = None) -> None:
         super().__init__(self.__class__.__name__, line, column)
         self.name: NameNode = name
         self.args: List[ASTNode] = args
+        self.kwargs: Dict[str, ASTNode] = kwargs
 
 
 class BinaryOpNode(ASTNode):

@@ -155,18 +155,18 @@ class Parser:
             返回:
                 tuple: (end, step) - 切片的end和step部分
             """
-            # 检查是否是第二个冒号，如 [start::step] 或 [::step]
+            # 检查是否是第二个冒号，如 [start?::step]
             if self.current_token and self.current_token.type == TokenType.COLON:
-                # 是 [start::step] 或 [::step] 形式，end为None
+                # 是 [start?::step] 形式，end为None
                 end = None
                 self.advance()  # 跳过第二个冒号
                 # 解析step，如果有的话
                 step = self.expr() if self.current_token and self.current_token.type != TokenType.RBRACK else None
             else:
-                # 是 [start:end] 或 [:end] 形式
+                # [start?:end] 形式
                 end = self.expr() if self.current_token and self.current_token.type != TokenType.RBRACK else None
                 
-                # 检查是否有第二个冒号，如 [start:end:step] 或 [:end:step]
+                # 检查是否有第二个冒号，如 [start?:end?:]
                 if self.current_token and self.current_token.type == TokenType.COLON:
                     self.advance()  # 跳过第二个冒号
                     step = self.expr() if self.current_token and self.current_token.type != TokenType.RBRACK else None
@@ -294,20 +294,36 @@ class Parser:
             name_token = self.expect(TokenType.NAME)
             name_node = NameNode(name_token.value, name_token.line, name_token.column)
             
-            # 解析参数列表 (...)
+            # 解析参数列表
             args = []
+            kwargs = {}
             if self.current_token and self.current_token.type == TokenType.LPAREN:
                 self.advance()
                 
                 # 解析参数
                 if self.current_token and self.current_token.type != TokenType.RPAREN:
                     # 解析第一个参数
-                    args.append(self.expr())  # 使用expr()而不是comparison()
+                    if self.current_token and self.current_token.type == TokenType.NAME:
+                        # 关键词参数
+                        key_node = self.expr()
+                        self.expect(TokenType.ASSIGN)
+                        kwargs[key_node] = self.expr()
+                    else:
+                        # 位置参数
+                        args.append(self.expr())
                     
                     # 解析逗号分隔的后续参数
                     while self.current_token and self.current_token.type == TokenType.COMMA:
                         self.advance()
-                        args.append(self.expr())  # 使用expr()而不是comparison()
+                        if self.current_token and self.current_token.type == TokenType.NAME:
+                            # 关键词参数
+                            key_node = self.expr()
+                            self.expect(TokenType.ASSIGN)
+                            kwargs[key_node] = self.expr()
+                        else:
+                            # 位置参数
+                            args.append(self.expr())
+                            
                 
                 # 确保参数列表以右括号结束
                 if not self.current_token or self.current_token.type != TokenType.RPAREN:
@@ -315,7 +331,7 @@ class Parser:
                     
                 self.advance() # 跳过右括号
             
-            return ScriptCallNode(name_node, args, line, column)
+            return ScriptCallNode(name_node, args, kwargs, line, column)
             
         elif token.type == TokenType.NAME:
             # 标识符或键名: name

@@ -189,3 +189,4 @@ venv.bak/
 *.swo
 
 .cursorrules
+*_test.py

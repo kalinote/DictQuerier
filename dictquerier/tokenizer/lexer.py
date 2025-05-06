@@ -49,7 +49,8 @@ class Lexer:
             yield Token(tok_type, value, column=self.column, line=self.line)
 
         # 扫描结束后，附加 END token
-        yield Token(TokenType.END, None, column=self.column, line=self.line)
+        self.column += 1
+        yield Token(TokenType.END, TokenType.END.literal, column=self.column, line=self.line)
 
     def _update_position(self, text):
         """
