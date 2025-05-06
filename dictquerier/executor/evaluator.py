@@ -62,7 +62,19 @@ class Evaluator(ASTVisitor):
         return value
 
     def visit_VarRefNode(self, node: VarRefNode):
-        return script_manager.get(self.visit(node.name))
+        # 函数操作时取消根查询标记
+        self.context['is_root_query'] = False
+        
+        var_name = self.visit(node.name)
+        
+        # 首先从脚本管理器中获取
+        var = script_manager.get(var_name)
+        
+        # 如果脚本管理器中没有获取到，则从数据中获取
+        if not var:
+            var = self.data.get(var_name)
+        
+        return var
 
     def visit_ScriptCallNode(self, node: ScriptCallNode):
         # 函数操作时取消根查询标记

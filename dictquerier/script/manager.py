@@ -116,7 +116,7 @@ class ScriptManager:
     def define(self, var_name, var_value):
         self.variables[var_name] = var_value
         
-    def get(self, var_name):  # noqa: E501
+    def get(self, var_name):
         return self.variables.get(var_name)
 
 script_manager = ScriptManager()
