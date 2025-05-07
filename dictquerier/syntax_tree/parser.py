@@ -443,13 +443,27 @@ class Parser:
                         value_str = '[]'
                     else:
                         list_sep = ', ' if indent is None else ',\n'
-                        list_pad = '' if indent is None else next_pad
-                        value_str = '[' + list_sep.join(
-                            list_pad + (format_node(item, level + 1) if is_ast_node(item) else repr(item))
+                        list_pad = '' if indent is None else next_pad + (' ' * indent)
+                        value_str = list_sep.join(
+                            list_pad + (format_node(item, level + 2) if is_ast_node(item) else repr(item))
                             for item in v
-                        ) + ']'
+                        )
                         if indent is not None:
-                            value_str = '[\n' + value_str + f'\n{pad}]'
+                            value_str = '[\n' + value_str + f'\n{next_pad}]'
+                        else:
+                            value_str = '[' + value_str + ']'
+                elif isinstance(v, dict):
+                    if not v:
+                        value_str = '{}'
+                    else:
+                        value_str = list_sep.join(
+                            list_pad + (format_node(k, level + 2) if is_ast_node(k) else repr(k)) + '=' + (format_node(v, level + 2) if is_ast_node(v) else repr(v))
+                            for k, v in v.items()
+                        )
+                        if indent is not None:
+                            value_str = '{\n' + value_str + f'\n{next_pad}'+ '}'
+                        else:
+                            value_str = '{' + value_str + '}'
                 elif is_ast_node(v):
                     value_str = format_node(v, level + 1)
                 else:
