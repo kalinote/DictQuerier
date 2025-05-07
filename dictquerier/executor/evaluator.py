@@ -62,7 +62,7 @@ class Evaluator(ASTVisitor):
         return value
 
     def visit_VarRefNode(self, node: VarRefNode):
-        # 函数操作时取消根查询标记
+        # 变量操作时取消根查询标记
         self.context['is_root_query'] = False
         
         var_name = self.visit(node.name)

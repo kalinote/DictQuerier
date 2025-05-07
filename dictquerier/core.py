@@ -20,11 +20,6 @@ def query_json(
 
     Returns:
         Any: 查询结果
-        
-    Examples:
-        >>> data = {"root": {"dict": {"items": [{"key": 5, "value": 10}, {"key": 15, "value": 20}]}}}
-        >>> query_json(data, 'root.dict.items["key" > 10].value')
-        [20]
     """
     try:
         # 词法分析
