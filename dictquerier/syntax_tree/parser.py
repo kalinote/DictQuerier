@@ -457,7 +457,7 @@ class Parser:
                         value_str = '{}'
                     else:
                         value_str = list_sep.join(
-                            list_pad + (format_node(k, level + 2) if is_ast_node(k) else repr(k)) + '=' + (format_node(v, level + 2) if is_ast_node(v) else repr(v))
+                            list_pad + (format_node(k, level + 2) if is_ast_node(k) else repr(k)) + ': ' + (format_node(v, level + 2) if is_ast_node(v) else repr(v))
                             for k, v in v.items()
                         )
                         if indent is not None:
@@ -470,10 +470,12 @@ class Parser:
                     value_str = repr(v)
                     
                 if annotate_fields:
-                    lines.append(f"{next_pad}{k}={value_str}")
+                    lines.append(f"{next_pad}{k}={value_str},")
                 else:
-                    lines.append(f"{next_pad}{value_str}")
+                    lines.append(f"{next_pad}{value_str},")
                     
+            lines[-1] = lines[-1].rstrip(',')
             lines.append(f"{pad})")
             return sep.join(lines)
         return format_node(node, level)
+    
