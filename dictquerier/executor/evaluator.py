@@ -85,7 +85,6 @@ class Evaluator(ASTVisitor):
         if not script_manager.check_script(name=func_name, path=module_path):
             raise ValueError(f"未定义的函数: {func_name}, 确保函数在运行前已注册")
             
-            
         # 求值所有参数
         args = [self.visit(arg) for arg in node.args]
         kwargs = {self.visit(key): self.visit(value) for key, value in node.kwargs.items()}

@@ -35,6 +35,9 @@ class TokenType(Enum):
     def pattern(self):
         return self._pattern
     
+    def __repr__(self) -> str:
+        return f"TokenType(literal={self.literal}, pattern={self.pattern})"
+    
 class Operator(Enum):
     """
     Operator 枚举类
@@ -57,3 +60,6 @@ class Operator(Enum):
 
     def __str__(self):
         return self.value 
+
+    def __repr__(self) -> str:
+        return f"Operator(value={self.value})"

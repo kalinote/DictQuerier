@@ -15,7 +15,7 @@ class Lexer:
         self.line = 1
         self.column = 0
 
-        # 基于 TokenType 构造 master_pattern，排除 END
+        # 基于 TokenType 构造 master_pattern
         patterns = [f"(?P<{t.name}>{t.pattern})"
                     for t in TokenType]
         self.master_pattern = re.compile("|".join(patterns))
@@ -43,7 +43,7 @@ class Lexer:
             
             # 未知字符时报错
             if kind == 'UNKNOWN':
-                raise SyntaxError(f"非法字符 {value!r} 在行{self.line}, 列{self.column}")
+                raise SyntaxError(f"非法字符 {value!r} 在行 {self.line}, 列 {self.column}")
 
             tok_type = TokenType[kind]
             yield Token(tok_type, value, column=self.column, line=self.line)

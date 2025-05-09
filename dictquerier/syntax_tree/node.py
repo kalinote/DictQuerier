@@ -3,7 +3,7 @@ from dictquerier.tokenizer.enum import Operator
 
 class ASTNode:
     """
-    抽象语法树基类
+    抽象语法树节点基类
     """
     def accept(self, visitor):
         method_name = f'visit_{self.__class__.__name__}'

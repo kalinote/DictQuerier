@@ -8,3 +8,4 @@ class ASTVisitor:
     def visit(self, node):
         """访问节点入口方法"""
         return node.accept(self)
+    

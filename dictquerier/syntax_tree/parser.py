@@ -192,7 +192,7 @@ class Parser:
                     self.advance()
                     left = KeyNode(left, key_name, line=line, column=column)
                 elif self.current_token.type == TokenType.STRING:
-                    key_name = self.parse_string_literal(self.current_token.value)
+                    key_name = self._parse_string_literal(self.current_token.value)
                     line, column = self.current_token.line, self.current_token.column
                     self.advance()
                     left = KeyNode(left, key_name, line=line, column=column)
@@ -341,12 +341,8 @@ class Parser:
                             # 位置参数
                             args.append(self.expr())
                             
-                
                 # 确保参数列表以右括号结束
-                if not self.current_token or self.current_token.type != TokenType.RPAREN:
-                    self.error("脚本调用参数列表没有正确结束，期望')'")
-                    
-                self.advance() # 跳过右括号
+                self.expect(TokenType.RPAREN)
             
             return ScriptCallNode(module_node, name_node, args, kwargs, line, column)
             
@@ -367,7 +363,7 @@ class Parser:
             
         elif token.type == TokenType.STRING:
             # 字符串字面量: "text", 'text'
-            value = self.parse_string_literal(token.value)
+            value = self._parse_string_literal(token.value)
             line, column = token.line, token.column
             self.advance()
             return StringNode(value, line, column)
@@ -375,18 +371,15 @@ class Parser:
         elif token.type == TokenType.LPAREN:
             # 括号表达式: (expr)
             self.advance()
+            # 取括号内的内容，按照一段完整语句进行递归处理
             expr = self.expr()
-            
-            if not self.current_token or self.current_token.type != TokenType.RPAREN:
-                self.error("括号表达式没有正确结束，期望')'")
-            
-            self.advance() # 跳过右括号
+            self.expect(TokenType.RPAREN)
             return expr
             
         else:
             self.error(f"意外的令牌类型: {token.type.literal}")
 
-    def parse_string_literal(self, string_literal: str) -> str:
+    def _parse_string_literal(self, string_literal: str) -> str:
         """解析字符串字面量，去除引号并处理转义字符"""
         # 去除开头和结尾的引号
         inside = string_literal[1:-1]
@@ -401,7 +394,6 @@ class Parser:
                     result += inside[i+1]
                     i += 2
                 else:
-                    # 不是我们处理的转义字符，保留原样
                     result += inside[i:i+2]
                     i += 2
             else:
@@ -434,7 +426,6 @@ class Parser:
             
             # 根据indent决定分隔符
             sep = '' if indent is None else '\n'
-            field_sep = ', ' if indent is None else ',\n'
             
             lines = [f"{cls_name}("]
             for i, (k, v) in enumerate(fields):
