@@ -58,18 +58,6 @@ class ScriptManager:
         self._check_cache[cache_key] = is_callable
         
         return is_callable
-
-    @functools.lru_cache(maxsize=128)
-    def _cached_import(self, module_path: str) -> Any:
-        """
-        使用LRU缓存导入模块（作为备用方法）
-        
-        Args:
-            module_path: 模块路径
-        Returns:
-            导入的模块
-        """
-        return importlib.import_module(module_path)
     
     def _get_function(self, name: str, path: str = None) -> Tuple[Optional[Callable], bool]:
         """
@@ -192,7 +180,6 @@ class ScriptManager:
         if func and is_callable:
             return func(*args, **kwargs)
             
-        # 如果脚本不存在或不可调用
         if path:
             raise ValueError(f"'{path}.{name}' 不存在或不是可调用对象")
         elif '.' in name:
