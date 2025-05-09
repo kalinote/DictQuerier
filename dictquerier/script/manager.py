@@ -38,7 +38,7 @@ class ScriptManager:
         检查脚本是否存在或可调用
 
         Args:
-            name (str): 函数名
+            name (str): 脚本名
             path (str): 模块路径，可选
         Returns:
             bool: 是否存在或可调用
@@ -73,13 +73,13 @@ class ScriptManager:
     
     def _get_function(self, name: str, path: str = None) -> Tuple[Optional[Callable], bool]:
         """
-        获取函数并缓存结果
+        获取脚本并缓存结果
         
         Args:
-            name: 函数名
+            name: 脚本名
             path: 模块路径，可选
         Returns:
-            (函数对象, 是否可调用)
+            (脚本对象, 是否可调用)
         """
         self._stats['total_calls'] += 1
         
@@ -108,7 +108,7 @@ class ScriptManager:
                 except (AttributeError, TypeError):
                     pass
                     
-        # 检查全局函数
+        # 检查全局脚本
         elif not path:
             import __main__
             main_globals = vars(__main__)
@@ -148,7 +148,7 @@ class ScriptManager:
             except Exception:
                 pass
         
-        # 函数解析或多级解析
+        # 脚本解析或多级解析
         else:
             full_path = name
             parts = full_path.split('.')
@@ -186,13 +186,13 @@ class ScriptManager:
         if kwargs is None:
             kwargs = {}
         
-        # 通过缓存获取函数
+        # 通过缓存获取脚本
         func, is_callable = self._get_function(name, path)
         
         if func and is_callable:
             return func(*args, **kwargs)
             
-        # 如果函数不存在或不可调用
+        # 如果脚本不存在或不可调用
         if path:
             raise ValueError(f"'{path}.{name}' 不存在或不是可调用对象")
         elif '.' in name:
@@ -224,10 +224,10 @@ class ScriptManager:
             
     def clear_specific_cache(self, name: str, path: str = None):
         """
-        清理特定函数的缓存
+        清理特定脚本的缓存
         
         Args:
-            name (str): 函数名
+            name (str): 脚本名
             path (str, optional): 模块路径
         """
         cache_key = f"{path}:{name}" if path else name
