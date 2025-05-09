@@ -82,8 +82,9 @@ class Evaluator(ASTVisitor):
         func_name = self.visit(node.name)
         module_path = ".".join([self.visit(module) for module in node.module])
         
-        if not script_manager.check_script(name=func_name, path=module_path):
-            raise ValueError(f"未定义的脚本: {func_name}, 确保脚本在运行前已注册")
+        # 调用时会执行检查，这一步多余
+        # if not script_manager.check_script(name=func_name, path=module_path):
+        #     raise ValueError(f"未定义的脚本: {func_name}, 确保脚本在运行前已注册")
             
         # 求值所有参数
         args = [self.visit(arg) for arg in node.args]

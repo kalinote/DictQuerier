@@ -2,6 +2,8 @@ import importlib
 import functools
 from typing import Any, Callable, Tuple, Optional
 
+from dictquerier.exceptions import UnknowScript
+
 class ScriptManager:
     def __init__(self):
         self.scripts = {}
@@ -10,7 +12,6 @@ class ScriptManager:
         # 缓存数据
         self._module_cache = {}
         self._function_cache = {}
-        self._check_cache = {}
         
         # 调用状态统计
         self._stats = {
@@ -32,6 +33,22 @@ class ScriptManager:
             self.scripts[key] = func
             return func
         return decorator
+    
+    def _get_cache_key(self, name: str, path: str = None) -> str:
+        """生成缓存键"""
+        return f"{path}:{name}" if path else name
+
+    def _record_call(self):
+        """记录调用统计"""
+        self._stats['total_calls'] += 1
+
+    def _record_hit(self):
+        """记录缓存命中"""
+        self._stats['hits'] += 1
+
+    def _record_miss(self):
+        """记录缓存未命中"""
+        self._stats['misses'] += 1
 
     def check_script(self, name: str, path: str = None) -> bool:
         """
@@ -43,20 +60,8 @@ class ScriptManager:
         Returns:
             bool: 是否存在或可调用
         """
-        self._stats['total_calls'] += 1
-        
-        # 尝试从缓存中获取结果
-        cache_key = f"{path}:{name}" if path else name
-        if cache_key in self._check_cache:
-            self._stats['hits'] += 1
-            return self._check_cache[cache_key]
-        
-        # 缓存未命中
-        self._stats['misses'] += 1
-        
+        # 直接使用_get_function的结果
         _, is_callable = self._get_function(name, path)
-        self._check_cache[cache_key] = is_callable
-        
         return is_callable
     
     def _get_function(self, name: str, path: str = None) -> Tuple[Optional[Callable], bool]:
@@ -69,16 +74,14 @@ class ScriptManager:
         Returns:
             (脚本对象, 是否可调用)
         """
-        self._stats['total_calls'] += 1
+        self._record_call()
         
-        # 尝试从缓存中获取结果
-        cache_key = f"{path}:{name}" if path else name
+        cache_key = self._get_cache_key(name, path)
         if cache_key in self._function_cache:
-            self._stats['hits'] += 1
+            self._record_hit()
             return self._function_cache[cache_key]
         
-        # 缓存未命中
-        self._stats['misses'] += 1
+        self._record_miss()
         result = (None, False)
         
         if name in self.scripts:
@@ -181,11 +184,11 @@ class ScriptManager:
             return func(*args, **kwargs)
             
         if path:
-            raise ValueError(f"'{path}.{name}' 不存在或不是可调用对象")
+            raise UnknowScript(f"'{path}.{name}' 不存在或不是可调用对象")
         elif '.' in name:
-            raise ValueError(f"'{name}' 不存在或不是可调用对象")
+            raise UnknowScript(f"'{name}' 不存在或不是可调用对象")
         else:
-            raise ValueError(f"脚本 '{name}' 未找到或不可调用")
+            raise UnknowScript(f"脚本 '{name}' 未找到或不可调用")
 
     def define(self, var_name, var_value):
         self.variables[var_name] = var_value
@@ -198,16 +201,13 @@ class ScriptManager:
         清理缓存
         
         Args:
-            cache_type (str, optional): 要清理的缓存类型，可选值：'module', 'function', 'check' 或 None(清理所有)
+            cache_type (str, optional): 要清理的缓存类型，可选值：'module', 'function' 或 None(清理所有)
         """
         if cache_type is None or cache_type == 'module':
             self._module_cache.clear()
             
         if cache_type is None or cache_type == 'function':
             self._function_cache.clear()
-            
-        if cache_type is None or cache_type == 'check':
-            self._check_cache.clear()
             
     def clear_specific_cache(self, name: str, path: str = None):
         """
@@ -217,13 +217,10 @@ class ScriptManager:
             name (str): 脚本名
             path (str, optional): 模块路径
         """
-        cache_key = f"{path}:{name}" if path else name
+        cache_key = self._get_cache_key(name, path)
         
         if cache_key in self._function_cache:
             del self._function_cache[cache_key]
-            
-        if cache_key in self._check_cache:
-            del self._check_cache[cache_key]
             
         # 如果有path，尝试清理模块缓存
         if path:
@@ -246,8 +243,7 @@ class ScriptManager:
             'total_calls': self._stats['total_calls'],
             'cache_size': {
                 'module': len(self._module_cache),
-                'function': len(self._function_cache),
-                'check': len(self._check_cache)
+                'function': len(self._function_cache)
             }
         }
         
@@ -276,12 +272,11 @@ class ScriptManager:
             导入的模块
         """
         if module_path in self._module_cache:
-            # 命中缓存
-            self._stats['hits'] += 1
+            self._record_hit()
             return self._module_cache[module_path]
         
         try:
-            self._stats['misses'] += 1
+            self._record_miss()
             module = importlib.import_module(module_path)
             self._module_cache[module_path] = module
             return module
