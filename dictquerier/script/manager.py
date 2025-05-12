@@ -103,9 +103,11 @@ class ScriptManager:
         self._record_miss()
         result = (None, False)
         
+        # 已注册的脚本
         if name in self.scripts:
             result = (self.scripts[name], True)
             
+        # 变量属性访问
         elif '.' in name and not path:
             var_parts = name.split('.')
             var_name = var_parts[0]
@@ -117,7 +119,7 @@ class ScriptManager:
                     result = (obj, callable(obj))
                 except (AttributeError, TypeError):
                     pass
-                    
+
         # 检查全局脚本
         elif not path:
             import __main__
@@ -131,51 +133,72 @@ class ScriptManager:
                     builtin_obj = getattr(builtins, name)
                     if callable(builtin_obj):
                         result = (builtin_obj, True)
-                
-        # 带path参数
-        elif path:
+        
+        # 多级模块导入和属性访问
+        if result == (None, False):  # 如果前面的尝试都失败了
             try:
-                parts = path.split('.')
-                if len(parts) > 1:
-                    try:
-                        base_module = self._import_module(parts[0])
-                        obj = base_module
-                        
-                        for part in parts[1:]:
-                            obj = getattr(obj, part)
-                        
-                        func = getattr(obj, name)
-                        result = (func, callable(func))
-                    except (ValueError, AttributeError):
-                        pass
+                if path:
+                    # 处理多级路径
+                    if '.' in path:
+                        try:
+                            path_parts = path.split('.')
+                            module = self._import_module(path_parts[0])
+                            obj = module
+                            
+                            for part in path_parts[1:]:
+                                obj = getattr(obj, part)
+                                
+                            if hasattr(obj, name):
+                                func = getattr(obj, name)
+                                if callable(func):
+                                    result = (func, True)
+                        except (ImportError, AttributeError, ValueError):
+                            pass
+                    else:
+                        # 单级路径，直接导入模块
+                        try:
+                            module = self._import_module(path)
+                            if hasattr(module, name):
+                                func = getattr(module, name)
+                                if callable(func):
+                                    result = (func, True)
+                        except (ImportError, AttributeError, ValueError):
+                            pass
                 else:
-                    try:
-                        module = self._import_module(path)
-                        func = getattr(module, name)
-                        result = (func, callable(func))
-                    except (ValueError, AttributeError):
-                        pass
+                    # 处理name是多级路径的情况
+                    full_path = name
+                    parts = full_path.split('.')
+                    if len(parts) > 1:
+                        module_path = parts[0]
+                        attr_chain = parts[1:]
+                        
+                        try:
+                            module = self._import_module(module_path)
+                            obj = module
+                            
+                            for attr in attr_chain:
+                                obj = getattr(obj, attr)
+                            
+                            result = (obj, callable(obj))
+                        except (ImportError, AttributeError, ValueError):
+                            for i in range(1, len(parts)):
+                                try:
+                                    potential_module = '.'.join(parts[:i])
+                                    potential_attrs = parts[i:]
+                                    
+                                    module = self._import_module(potential_module)
+                                    obj = module
+                                    
+                                    for attr in potential_attrs:
+                                        obj = getattr(obj, attr)
+                                    
+                                    if callable(obj):
+                                        result = (obj, True)
+                                        break
+                                except (ImportError, AttributeError, ValueError):
+                                    continue
             except Exception:
                 pass
-        
-        # 脚本解析或多级解析
-        else:
-            full_path = name
-            parts = full_path.split('.')
-            if len(parts) > 1:
-                for i in range(len(parts) - 1, 0, -1):
-                    module_path = '.'.join(parts[:i])
-                    attr_chain = parts[i:]
-                    try:
-                        module = self._import_module(module_path)
-                        obj = module
-                        for attr in attr_chain:
-                            obj = getattr(obj, attr)
-                        if callable(obj):
-                            result = (obj, True)
-                            break
-                    except (ValueError, AttributeError):
-                        continue
         
         # 保存到缓存
         self._function_cache[cache_key] = result
