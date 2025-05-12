@@ -34,6 +34,25 @@ class ScriptManager:
             return func
         return decorator
     
+    def unregister(self, name: str) -> bool:
+        """
+        卸载已注册的脚本
+        
+        Args:
+            name (str): 要卸载的脚本名称
+        Returns:
+            bool: 卸载是否成功
+        """
+        if name in self.scripts:
+            # 从scripts字典中移除
+            del self.scripts[name]
+            
+            # 清除相关缓存
+            self.clear_specific_cache(name)
+            
+            return True
+        return False
+    
     def _get_cache_key(self, name: str, path: str = None) -> str:
         """生成缓存键"""
         return f"{path}:{name}" if path else name
