@@ -62,4 +62,4 @@ class Operator(Enum):
         return self.value 
 
     def __repr__(self) -> str:
-        return f"Operator(value={self.value})"
+        return f"Operator(value='{self.value}')"

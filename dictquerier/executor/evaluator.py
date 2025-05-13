@@ -20,6 +20,11 @@ class Evaluator(ASTVisitor):
         return result
 
     def visit_NameNode(self, node: NameNode):
+        if self.context.get('get_literal', False):
+            # 脚本和变量操作时直接获取字面量名称
+            self.context['get_literal'] = False
+            return node.name
+        
         # 如果是根查询，从self.data中获取对应键的值
         if self.context.get('is_root_query', False):
             name = node.name
@@ -62,8 +67,8 @@ class Evaluator(ASTVisitor):
         return value
 
     def visit_VarRefNode(self, node: VarRefNode):
-        # 变量操作时取消根查询标记
-        self.context['is_root_query'] = False
+        # 直接获取变量名字面量
+        self.context['get_literal'] = True
         
         var_name = self.visit(node.name)
         
@@ -77,14 +82,10 @@ class Evaluator(ASTVisitor):
         return var
 
     def visit_ScriptCallNode(self, node: ScriptCallNode):
-        # 脚本操作时取消根查询标记
-        self.context['is_root_query'] = False
+        # 直接获取脚本名字面量
+        self.context['get_literal'] = True
         func_name = self.visit(node.name)
         module_path = ".".join([self.visit(module) for module in node.module])
-        
-        # 调用时会执行检查，这一步多余
-        # if not script_manager.check_script(name=func_name, path=module_path):
-        #     raise ValueError(f"未定义的脚本: {func_name}, 确保脚本在运行前已注册")
             
         # 求值所有参数
         args = [self.visit(arg) for arg in node.args]
@@ -169,7 +170,7 @@ class Evaluator(ASTVisitor):
                 
             return None
             
-        # 处理列表对象 - 对列表中的每个元素获取同名键
+        # 对列表中的每个元素获取同名键
         if isinstance(obj, list):
             result = []
             for item in obj:
